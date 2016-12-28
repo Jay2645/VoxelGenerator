@@ -2,23 +2,22 @@
 
 #pragma once
 #include "Noise/FastNoise.h"
-#include "VoxelTerrainPager.h"
+#include "Wrappers/Pager.h"
+#include "VoxelInfiniteTerrainPager.generated.h"
 
 /**
  * 
  */
-class POLYVOX_API VoxelInfiniteTerrainPager : public VoxelTerrainPager
+ UCLASS(Blueprintable)
+class POLYVOX_API UVoxelInfiniteTerrainPager : public UPager
 {
-public:
-	// Constructor
-	VoxelInfiniteTerrainPager(FVector TerrainChunkPosition, AVoxelChunk* VoxelActor) : VoxelTerrainPager(TerrainChunkPosition, VoxelActor) {};
-	~VoxelInfiniteTerrainPager() {};
+GENERATED_BODY()
 
 public:
 	FastNoise NoiseGenerator;
 	FNoiseProfile NoiseProfile;
 
-public:
-	virtual void pageIn(const PolyVox::Region& VoxelRegion, PolyVox::PagedVolume<PolyVox::MaterialDensityPair44>::Chunk* Chunk) override;
-	virtual FVoxelHeightmapData GetPointHeightmap(const PolyVox::Region& VoxelRegion, int32 PointX, int32 PointY) override;
+protected:
+	virtual void InitializePager_Implementation(UChunkManager* Manager) override;
+	virtual FVoxelHeightmapData GetPointHeightmap_Implementation(URegion* VoxelRegion, int32 PointX, int32 PointY) override;
 };

@@ -2,6 +2,7 @@
 * The MIT License (MIT)
 *
 * Copyright (c) 2015 David Williams and Matthew Williams
+* Modifications copyright (c) 2016 Jay Stevens
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -68,14 +69,17 @@ namespace PolyVox
 	template <typename VoxelType>
 	PagedVolume<VoxelType>::Chunk::~Chunk()
 	{
-		if (m_bDataModified && m_pPager)
+		if (m_bDataModified)
 		{
-			// From the coordinates of the chunk we deduce the coordinates of the contained voxels.
-			Vector3DInt32 v3dLower = m_v3dChunkSpacePosition * static_cast<int32_t>(m_uSideLength);
-			Vector3DInt32 v3dUpper = v3dLower + Vector3DInt32(m_uSideLength - 1, m_uSideLength - 1, m_uSideLength - 1);
+			if(m_pPager != NULL)
+			{
+				// From the coordinates of the chunk we deduce the coordinates of the contained voxels.
+				Vector3DInt32 v3dLower = m_v3dChunkSpacePosition * static_cast<int32_t>(m_uSideLength);
+				Vector3DInt32 v3dUpper = v3dLower + Vector3DInt32(m_uSideLength - 1, m_uSideLength - 1, m_uSideLength - 1);
 
-			// Page the data out
-			m_pPager->pageOut(Region(v3dLower, v3dUpper), this);
+				// Page the data out
+				m_pPager->pageOut(Region(v3dLower, v3dUpper), this);
+			}
 		}
 
 		delete[] m_tData;

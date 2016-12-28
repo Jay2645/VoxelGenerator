@@ -61,6 +61,30 @@ struct FPolyVoxVector : public FVector
 };
 
 USTRUCT(BlueprintType)
+struct FVoxelTriangle
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		FVector Vertex0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		FVector Vertex1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		FVector Vertex2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		int32 MaterialID;
+};
+
+USTRUCT(BlueprintType)
+struct FVoxelMeshSection
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+		TArray<FVoxelTriangle> Triangles;
+};
+
+USTRUCT(BlueprintType)
 struct POLYVOX_API FVoxelHeightmapData
 {
 	GENERATED_BODY()

@@ -4,26 +4,18 @@
 #include "ChunkManager.h"
 #include "VoxelProceduralMeshComponent.h"
 
-
-using namespace PolyVox;
-
-// Defines a region of voxels we want to render
-// Polyvox will take that region and chop it up into chunks
-// Each one of these chunks will then be paged in one at a time
-// Some chunks will be fully "underground," while other chunks may be completely air
-void UVoxelProceduralMeshComponent::CreateMeshFromVolume(PagedVolume<MaterialDensityPair44>* Volume, PolyVox::Region& ChunkRegion, TArray<FVoxelMaterial>& TerrainMaterials)
+void UVoxelProceduralMeshComponent::CreateMarchingCubesMeshFromVolume(AVoxelVolume* Volume, URegion* ChunkRegion, TArray<FVoxelMaterial>& TerrainMaterials)
 {
-	VoxelMaterials = TerrainMaterials;
-	if (VoxelMaterials.Num() == 0)
+	if (TerrainMaterials.Num() == 0)
 	{
 		UE_LOG(LogTemp, Error, TEXT("No materials defined when sending volume to procedural mesh!"));
 		return;
 	}
-	VoxelVolume = MakeShareable(Volume);
-	CurrentTriangleIndex = 0;
+	CreateMeshFromVoxelSections(Volume->CreateMarchingCubesMeshSections(ChunkRegion), TerrainMaterials);
+}
 
-	auto rawMesh = extractMarchingCubesMesh(VoxelVolume.Get(), ChunkRegion);
-	MeshSections = GenerateTriangles(rawMesh);
+void UVoxelProceduralMeshComponent::CreateMeshFromVoxelSections(TArray<FVoxelMeshSection> MeshSections, TArray<FVoxelMaterial> VoxelMaterials)
+{
 	if (MeshSections.Num() > VoxelMaterials.Num())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("More mesh sections are being made (%d) than there are materials defined (%d)."), MeshSections.Num(), VoxelMaterials.Num());
@@ -49,56 +41,6 @@ void UVoxelProceduralMeshComponent::CreateMeshFromVolume(PagedVolume<MaterialDen
 	}
 }
 
-TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const PolyVox::Mesh<PolyVox::MarchingCubesVertex<PolyVox::PagedVolume<MaterialDensityPair44>::VoxelType>>& ExtractedMesh) const
-{
-	TArray<FVoxelMeshSection> meshSections;
-	auto decodedMesh = decodeMesh(ExtractedMesh);
-
-	// Sanity check
-	if (decodedMesh.getNoOfIndices() < 3)
-	{
-		UE_LOG(LogTemp, Error, TEXT("Not enough vertices to create any procedural meshes!"));
-		return meshSections;
-	}
-
-	for (int i = 0; i < decodedMesh.getNoOfIndices() - 2; i += 3)
-	{
-		// Create triangle
-		FVoxelTriangle triangle;
-
-		// Get Vertex 0
-		auto index = decodedMesh.getIndex(i);
-		FVector vertex = FPolyVoxVector(decodedMesh.getVertex(index).position);
-		triangle.Vertex0 = vertex;
-
-		// Get Vertex 1
-		index = decodedMesh.getIndex(i + 1);
-		vertex = FPolyVoxVector(decodedMesh.getVertex(index).position);
-		triangle.Vertex1 = vertex;
-
-		// Get Vertex 2
-		index = decodedMesh.getIndex(i + 2);
-		vertex = FPolyVoxVector(decodedMesh.getVertex(index).position);
-		triangle.Vertex2 = vertex;
-
-		// Get Material ID
-		int32 materialID = decodedMesh.getVertex(index).data.getMaterial();
-		triangle.MaterialID = materialID;
-		if (materialID < 0)
-		{
-			continue;
-		}
-		else if (materialID >= meshSections.Num())
-		{
-			meshSections.SetNumZeroed(materialID + 1);
-		}
-
-		// Add to output
-		meshSections[materialID].Triangles.Add(triangle);
-	}
-	return meshSections;
-}
-
 FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVoxelTriangle> Triangles, bool bShouldEnableCollision)
 {
 	FProcMeshSection meshSection;
@@ -116,8 +58,8 @@ FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVo
 		vertex2.Position = Triangles[i].Vertex2 * voxelSize;
 
 		// Calculate the tangents of our triangle
-		const FVector Edge01 = FPolyVoxVector(Triangles[i].Vertex1 - Triangles[i].Vertex0);
-		const FVector Edge02 = FPolyVoxVector(Triangles[i].Vertex2 - Triangles[i].Vertex0);
+		const FVector Edge01 = FVector(Triangles[i].Vertex1 - Triangles[i].Vertex0);
+		const FVector Edge02 = FVector(Triangles[i].Vertex2 - Triangles[i].Vertex0);
 		const FVector TangentX = Edge01.GetSafeNormal();
 		FVector TangentZ = (Edge01 ^ Edge02).GetSafeNormal();
 

@@ -5,7 +5,7 @@
 #include "ChunkManager.h"
 #include "VoxelHeightmapTerrainPager.h"
 
-using namespace PolyVox;
+/*using namespace PolyVox;
 
 FVoxelHeightmapData VoxelHeightmapTerrainPager::GetPointHeightmap(const Region& VoxelRegion, int32 PointX, int32 PointY)
 {
@@ -15,4 +15,4 @@ FVoxelHeightmapData VoxelHeightmapTerrainPager::GetPointHeightmap(const Region& 
 	}
 
 	return ChunkHeightmap->GetMapPoint(PointX, PointY);
-}
+}*/

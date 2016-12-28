@@ -4,6 +4,8 @@
 
 #include "GameFramework/Actor.h"
 #include "Mesh/VoxelProceduralMeshComponent.h"
+#include "Wrappers/Pager.h"
+#include "Wrappers/Region.h"
 #include "VoxelChunk.generated.h"
 
 UCLASS(BlueprintType)
@@ -14,9 +16,6 @@ class POLYVOX_API AVoxelChunk : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AVoxelChunk();
-
-	// Called when the actor has begun playing in the level
-	virtual void BeginPlay() override;
 public:
 	// Where our chunk is located in the map
 	UPROPERTY(Category = "Voxel Terrain", BlueprintReadWrite, VisibleAnywhere)
@@ -32,22 +31,23 @@ public:
 	void SetChunkID(const int32& idX, const int32& idY);
 	UFUNCTION(BlueprintPure, Category = "Voxel")
 	FVector VoxelPositionToWorldPosition(int32 X, int32 Y, int32 Z) const;
-
 public:
 	// Mesh
 	UPROPERTY(Category = "Voxel Terrain", BlueprintReadWrite, EditAnywhere)
 	UVoxelProceduralMeshComponent* TerrainMesh;
 
-	void GenerateTerrain();
+	static AVoxelChunk* GenerateTerrain(AVoxelVolume* VoxelVolume, URegion* OurRegion);
 
-private:
+public:
 	// PolyVox
 
 	// The region of this chunk.
-	PolyVox::Region ChunkRegion;
-
-public:
-	PolyVox::Region GetChunkRegion() const;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "PolyVox")
+	URegion* ChunkRegion;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PolyVox")
+	TSubclassOf<UPager> PagerClass;
+	UFUNCTION(BlueprintPure, Category = "Region")
+	URegion* GetChunkRegion() const;
 
 private:
 	// Trees

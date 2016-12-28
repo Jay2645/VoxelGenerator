@@ -8,7 +8,7 @@
 /**
  * 
  */
-class POLYVOX_API VoxelHeightmapTerrainPager : public VoxelTerrainPager
+/*class POLYVOX_API VoxelHeightmapTerrainPager : public VoxelTerrainPager
 {
 public:
 	~VoxelHeightmapTerrainPager() {};
@@ -18,4 +18,4 @@ public:
 
 public:
 	virtual FVoxelHeightmapData GetPointHeightmap(const PolyVox::Region& VoxelRegion, int32 PointX, int32 PointY) override;
-};
+};*/

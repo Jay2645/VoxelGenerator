@@ -6,7 +6,7 @@
 #include "PolyVox/MaterialDensityPair.h"
 #include "VoxelHelper.h"
 
-class AVoxelChunk;
+class UPager;
 
 /**
  * 
@@ -15,18 +15,15 @@ class POLYVOX_API VoxelTerrainPager : public PolyVox::PagedVolume<PolyVox::Mater
 {
 public:
 	// Constructor
-	VoxelTerrainPager(FVector TerrainChunkPosition, AVoxelChunk* VoxelActor);
+	VoxelTerrainPager(UPager* OurPager, UChunkManager* OurChunkManager);
 
 	// Destructor
 	virtual ~VoxelTerrainPager() {};
 
 	// PagedVolume::Pager functions
 	virtual void pageIn(const PolyVox::Region& VoxelRegion, PolyVox::PagedVolume<PolyVox::MaterialDensityPair44>::Chunk* Chunk);
-	virtual FVoxelHeightmapData GetPointHeightmap(const PolyVox::Region& VoxelRegion, int32 PointX, int32 PointY);
-	virtual void ProcessPoint(const PolyVox::Region& VoxelRegion, PolyVox::PagedVolume<PolyVox::MaterialDensityPair44>::Chunk* Chunk, int32 PointX, int32 PointY, float WaterHeight, const TMap<FName, int32>& BiomeMaterials);
 	virtual void pageOut(const PolyVox::Region& VoxelRegion, PolyVox::PagedVolume<PolyVox::MaterialDensityPair44>::Chunk* Chunk);
-
 protected:
-	FVector ChunkPosition;
-	AVoxelChunk* TerrainVoxelActor;
+	UPager* VoxelPager;
+	UChunkManager* ChunkManager;
 };
