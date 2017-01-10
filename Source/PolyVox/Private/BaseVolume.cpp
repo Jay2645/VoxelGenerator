@@ -1,4 +1,27 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+/*******************************************************************************
+The MIT License (MIT)
+
+Copyright (c) 2015 David Williams and Matthew Williams
+Modified for use in Unreal Engine 4 by Jay Stevens
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*******************************************************************************/
 
 #include "PolyVoxPrivatePCH.h"
 #include "ArrayHelper.h"
@@ -74,7 +97,7 @@ void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>&
 	int32 targetSize = regionWidth * URegionHelper::GetHeightInCells(Region);
 	if (Heights.Num() != targetSize)
 	{
-		// Resize
+		// TODO Resize
 	}
 
 	for (int x = Region.LowerX; x < Region.UpperX; x++)
@@ -98,11 +121,12 @@ void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>&
 	}
 }
 
-void ABaseVolume::SetRegionHeightmapFromImage(const FRegion& Region, UTexture2D* Texture, const FVoxel& Filler)
+void ABaseVolume::SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, const FVoxel& Filler)
 {
 	if (Texture == NULL)
 	{
 		UE_LOG(LogPolyVox, Error, TEXT("No texture defined!"));
+		return;
 	}
 
 	uint32 textureWidth = Texture->GetSizeX();
@@ -128,21 +152,58 @@ void ABaseVolume::SetRegionHeightmapFromImage(const FRegion& Region, UTexture2D*
 	for (uint32 y = 0; y < textureHeight; y++) {
 
 		for (uint32 x = 0; x < textureWidth; x++) {
-			//data in the raw var is serialized i think ;)
-			//so a pixel is four consecutive numbers e.g 0,0,0,255
-			//and the following code split the values in single components and store them in a FColor
-			pixel.B = raw[4 * (textureWidth * y + x) + 0];
-			pixel.G = raw[4 * (textureWidth * y + x) + 1];
-			pixel.R = raw[4 * (textureWidth * y + x) + 2];
-			//And then this code iterates over the TArray of FColors and stores them
-			floatArray[x + y * textureWidth] = (((float)pixel.R / 255.0f) + ((float)pixel.G / 255.0f) + ((float)pixel.B / 255.0f)) / 3.0f;
-			UE_LOG(LogPolyVox, Log, TEXT("Stored %d, %d, %d float array as %f."), pixel.R, pixel.G, pixel.B, floatArray[x + y * textureWidth]);
+			// Data in the raw var is serialized
+			// So a pixel is four consecutive numbers e.g 0,0,0,255
+			// The following code splits the values in single components and stores them in a FColor
+			pixel.B = raw[4 * (textureHeight * y + x) + 0];
+			pixel.G = raw[4 * (textureHeight * y + x) + 1];
+			pixel.R = raw[4 * (textureHeight * y + x) + 2];
+			// And then this code iterates over the TArray of floats and stores them
+			floatArray[x + y * textureHeight] = (((float)pixel.R / 255.0f) + ((float)pixel.G / 255.0f) + ((float)pixel.B / 255.0f)) / 3.0f;
 		}
 	}
 	Mip.BulkData.Unlock();
 	Texture->UpdateResource();
 
-	SetRegionHeightmap(Region, floatArray, Filler);
+	FRegion region;
+	region.LowerX = StartingPoint.X;
+	region.LowerY = StartingPoint.Y;
+	region.LowerZ = StartingPoint.Z;
+	region.UpperX = region.LowerX + textureHeight;
+	region.UpperY = region.LowerY + textureWidth;
+	region.UpperZ = region.LowerZ + RegionHeight;
+
+	SetRegionHeightmap(region, floatArray, Filler);
+}
+
+void ABaseVolume::SetRegionMaterials(const FRegion& Region, const TArray<uint8>& Materials, int32 BeginAtDepth, int32 PenetrateDistance)
+{
+	for (int x = Region.LowerX; x < Region.UpperX; x++)
+	{
+		for (int y = Region.LowerY; y < Region.UpperY; y++)
+		{
+			int32 currentVoxelDepth = -1;
+			// We go "backwards" and start from the top of the region downward
+			for (int z = Region.UpperZ - 1; z >= Region.LowerZ; z--)
+			{
+				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
+				if (voxel.Density > 128)
+				{
+					currentVoxelDepth++;
+					if (currentVoxelDepth >= BeginAtDepth && currentVoxelDepth < PenetrateDistance)
+					{
+						voxel.Material = UArrayHelper::Get2DUint8(Materials, x, y, URegionHelper::GetWidthInVoxels(Region));
+						SetVoxelByCoordinates(x, y, z, voxel);
+					}
+					else if (currentVoxelDepth + BeginAtDepth >= PenetrateDistance)
+					{
+						break;
+					}
+				}
+			}
+		}
+
+	}
 }
 
 void ABaseVolume::DrawVolumeAsDebug(const FRegion& DebugRegion)
