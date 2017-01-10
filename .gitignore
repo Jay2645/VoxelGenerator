@@ -2,6 +2,7 @@ Binaries
 DerivedDataCache
 Intermediate
 Saved
+Backup
 PolygonalMapGen.uproject
 PolygonalMapGen.Target.cs
 PolygonalMapGenEditor.Target.cs
