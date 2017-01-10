@@ -104,29 +104,43 @@ void ABaseVolume::SetRegionHeightmapFromImage(const FRegion& Region, UTexture2D*
 	{
 		UE_LOG(LogPolyVox, Error, TEXT("No texture defined!"));
 	}
-	FTexture2DMipMap* mipMap = &Texture->PlatformData->Mips[0];
-	FByteBulkData* rawData = &mipMap->BulkData;
-	FColor* formatedImageData = static_cast<FColor*>(rawData->Lock(LOCK_READ_ONLY));
-	
+
+	uint32 textureWidth = Texture->GetSizeX();
+	uint32 textureHeight = Texture->GetSizeY();
+
 	TArray<float> floatArray;
+	floatArray.SetNumZeroed(textureWidth * textureHeight);
+	
+	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];//A reference 
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	uint8* raw = NULL;
+	raw = (uint8*)Data;
 
-	uint32 textureWidth = mipMap->SizeX;
-	uint32 textureHeight = mipMap->SizeY;
-	for (uint32 x = 0; x < textureWidth; x++)
+	if (raw == NULL)
 	{
-		for (uint32 y = 0; y < textureHeight; y++)
-		{
-			FColor color = formatedImageData[y * textureWidth + x];
-			float redAmount = color.R / 255;
-			float greenAmount = color.G / 255;
-			float blueAmount = color.B / 255;
-
-			float gray = (redAmount + greenAmount + blueAmount) / 3.0f;
-			floatArray.Add(gray); 
-		}
+		UE_LOG(LogPolyVox, Error, TEXT("Raw image data was null!"));
+		Mip.BulkData.Unlock();
+		Texture->UpdateResource();
+		return;
 	}
 
-	Texture->PlatformData->Mips[0].BulkData.Unlock();
+	FColor pixel = FColor(0, 0, 0, 255);//used for splitting the data stored in raw form
+	for (uint32 y = 0; y < textureHeight; y++) {
+
+		for (uint32 x = 0; x < textureWidth; x++) {
+			//data in the raw var is serialized i think ;)
+			//so a pixel is four consecutive numbers e.g 0,0,0,255
+			//and the following code split the values in single components and store them in a FColor
+			pixel.B = raw[4 * (textureWidth * y + x) + 0];
+			pixel.G = raw[4 * (textureWidth * y + x) + 1];
+			pixel.R = raw[4 * (textureWidth * y + x) + 2];
+			//And then this code iterates over the TArray of FColors and stores them
+			floatArray[x + y * textureWidth] = (((float)pixel.R / 255.0f) + ((float)pixel.G / 255.0f) + ((float)pixel.B / 255.0f)) / 3.0f;
+			UE_LOG(LogPolyVox, Log, TEXT("Stored %d, %d, %d float array as %f."), pixel.R, pixel.G, pixel.B, floatArray[x + y * textureWidth]);
+		}
+	}
+	Mip.BulkData.Unlock();
+	Texture->UpdateResource();
 
 	SetRegionHeightmap(Region, floatArray, Filler);
 }
