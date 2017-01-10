@@ -5,30 +5,25 @@ using UnrealBuildTool;
 
 public class PolyVox : ModuleRules
 {
-	private string ThirdPartyPath
-	{
-		get { return Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty/")); }
-	}
 
 	public PolyVox(TargetInfo Target)
 	{
 		PublicIncludePaths.AddRange(
 			new string[] {
 				"PolyVox/Public",
-				Path.Combine(ThirdPartyPath, "polyvox", "include")
 				// ... add public include paths required here ...
 			}
 			);
-				
-		
+
+
 		PrivateIncludePaths.AddRange(
 			new string[] {
 				"PolyVox/Private",
 				// ... add other private include paths required here ...
 			}
 			);
-			
-		
+
+
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -38,8 +33,8 @@ public class PolyVox : ModuleRules
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
-			
-		
+
+
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
@@ -50,8 +45,8 @@ public class PolyVox : ModuleRules
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
-		
-		
+
+
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]
 			{
