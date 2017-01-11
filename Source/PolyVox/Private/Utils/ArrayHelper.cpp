@@ -7,7 +7,7 @@ uint8 UArrayHelper::Get2DUint8(const TArray<uint8>& IntArray, const int32 XPos, 
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= IntArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, IntArray.Num());
 		return 0;
 	}
 	return IntArray[index];
@@ -18,7 +18,7 @@ int32 UArrayHelper::Get2Dint32(const TArray<int32>& IntArray, const int32 XPos, 
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= IntArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, IntArray.Num());
 		return 0;
 	}
 	return IntArray[index];
@@ -29,7 +29,7 @@ UObject* UArrayHelper::Get2DUObject(const TArray<UObject*>& ObjectArray, const i
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= ObjectArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, ObjectArray.Num());
 		return 0;
 	}
 	return ObjectArray[index];
@@ -40,7 +40,7 @@ FVector UArrayHelper::Get2DFVector(const TArray<FVector>& VectorArray, const int
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= VectorArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, VectorArray.Num());
 		return FVector::ZeroVector;
 	}
 	return VectorArray[index];
@@ -51,7 +51,7 @@ FColor UArrayHelper::Get2DFColor(const TArray<FColor>& VectorArray, const int32 
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= VectorArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, VectorArray.Num());
 		return FColor::Black;
 	}
 	return VectorArray[index];
@@ -62,7 +62,7 @@ float UArrayHelper::Get2DFloat(const TArray<float>& FloatArray, const int32 XPos
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= FloatArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, FloatArray.Num());
 		return 0.0f;
 	}
 	return FloatArray[index];
@@ -73,7 +73,7 @@ TArray<uint8> UArrayHelper::Set2DUint8(TArray<uint8>& IntArray, uint8 ValueToSet
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= IntArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, IntArray.Num());
 		return IntArray;
 	}
 	IntArray[index] = ValueToSet;
@@ -85,7 +85,7 @@ TArray<int32> UArrayHelper::Set2Dint32(TArray<int32>& IntArray, int32 ValueToSet
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= IntArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, IntArray.Num());
 		return IntArray;
 	}
 	IntArray[index] = ValueToSet;
@@ -97,7 +97,7 @@ TArray<UObject*> UArrayHelper::Set2DUObject(TArray<UObject*>& ObjectArray, UObje
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= ObjectArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, ObjectArray.Num());
 		return ObjectArray;
 	}
 	ObjectArray[index] = ValueToSet;
@@ -109,7 +109,7 @@ TArray<FVector> UArrayHelper::Set2DFVector(TArray<FVector>& VectorArray, FVector
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
 	if (index >= VectorArray.Num())
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Returned an index which was outside the bounds of our array!"));
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, VectorArray.Num());
 		return VectorArray;
 	}
 	VectorArray[index] = ValueToSet;
