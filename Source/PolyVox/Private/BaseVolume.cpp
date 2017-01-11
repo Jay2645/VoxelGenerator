@@ -77,11 +77,11 @@ void ABaseVolume::FlattenRegionToHeight(const FRegion& Region, const int32 Heigh
 			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (z <= Height && voxel.Density == 0)
+				if (z <= Height && !voxel.bIsSolid)
 				{
 					SetVoxelByCoordinates(x, y, z, Filler);
 				}
-				else if (z > Height && voxel.Density != 0)
+				else if (z > Height && voxel.bIsSolid)
 				{
 					SetVoxelByCoordinates(x, y, z, FVoxel());
 				}
@@ -187,7 +187,7 @@ void ABaseVolume::SetRegionMaterials(const FRegion& Region, const TArray<uint8>&
 			for (int z = Region.UpperZ - 1; z >= Region.LowerZ; z--)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (voxel.Density > 128)
+				if (voxel.bIsSolid)
 				{
 					currentVoxelDepth++;
 					if (currentVoxelDepth >= BeginAtDepth && currentVoxelDepth < PenetrateDistance)
@@ -215,11 +215,14 @@ void ABaseVolume::DrawVolumeAsDebug(const FRegion& DebugRegion)
 			for (int z = DebugRegion.LowerZ; z < DebugRegion.UpperZ; z++)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (voxel.Density == 0)
+				if (!voxel.bIsSolid)
 				{
 					continue;
 				}
-				DrawDebugBox(GetWorld(), FVector(x * 100.0f, y * 100.0f, z * 100.0f), FVector(100.0f, 100.0f, 100.0f), FColor::Red, true);
+				else
+				{
+					DrawDebugBox(GetWorld(), FVector(x * 100.0f, y * 100.0f, z * 100.0f), FVector(100.0f, 100.0f, 100.0f), FColor::Red, true);
+				}
 			}
 		}
 	}

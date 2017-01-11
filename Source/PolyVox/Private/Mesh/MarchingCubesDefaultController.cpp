@@ -29,7 +29,14 @@ SOFTWARE.
 
 uint8 UMarchingCubesDefaultController::ConvertToDensity(const FVoxel& Voxel)
 {
-	return Voxel.Density;
+	if (Voxel.bIsSolid)
+	{
+		return 255;
+	}
+	else
+	{
+		return 0;
+	}
 }
 
 FVoxel UMarchingCubesDefaultController::BlendMaterials(const FVoxel& FirstVoxel, const FVoxel& SecondVoxel, const float Interpolation)

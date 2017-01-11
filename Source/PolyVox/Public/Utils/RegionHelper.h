@@ -35,15 +35,18 @@ struct POLYVOX_API FVoxel
 {
 	GENERATED_BODY()
 public:
+	// An index referring to this voxel's "Material."
+	// This can be either a UENUM or a hardcoded uint8 value.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Voxel")
 	uint8 Material;
+	// Whether this voxel is solid or air.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
-	uint8 Density;
+	bool bIsSolid;
 
 	FVoxel()
 	{
 		Material = 0;
-		Density = 0;
+		bIsSolid = true;
 	}
 };
 
