@@ -35,24 +35,24 @@ ABaseVolume::ABaseVolume()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
-FVoxel ABaseVolume::GetVoxelByCoordinates(int32 xPos, int32 yPos, int32 zPos)
+UVoxel* ABaseVolume::GetVoxelByCoordinates(int32 xPos, int32 yPos, int32 zPos)
 {
 	unimplemented();
-	return FVoxel();
+	return UVoxel::GetEmptyVoxel();
 }
 
-FVoxel ABaseVolume::GetVoxelByVector(const FVector& Coordinates)
+UVoxel* ABaseVolume::GetVoxelByVector(const FVector& Coordinates)
 {
 	unimplemented();
-	return FVoxel();
+	return UVoxel::GetEmptyVoxel();
 }
 
-void ABaseVolume::SetVoxelByCoordinates(int32 xPos, int32 yPos, int32 zPos, const FVoxel& Voxel)
+void ABaseVolume::SetVoxelByCoordinates(int32 xPos, int32 yPos, int32 zPos, UVoxel* Voxel)
 {
 	unimplemented();
 }
 
-void ABaseVolume::SetVoxelByVector(const FVector& Coordinates, const FVoxel& Voxel)
+void ABaseVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)
 {
 	unimplemented();
 }
@@ -68,7 +68,7 @@ uint8 ABaseVolume::GetSideLengthPower() const
 	return 0;
 }
 
-void ABaseVolume::FlattenRegionToHeight(const FRegion& Region, const int32 Height, const FVoxel& Filler)
+void ABaseVolume::FlattenRegionToHeight(const FRegion& Region, const int32 Height, UVoxel* Filler)
 {
 	for (int x = Region.LowerX; x < Region.UpperX; x++)
 	{
@@ -76,21 +76,21 @@ void ABaseVolume::FlattenRegionToHeight(const FRegion& Region, const int32 Heigh
 		{
 			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
 			{
-				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (z <= Height && !voxel.bIsSolid)
+				UVoxel* voxel = GetVoxelByCoordinates(x, y, z);
+				if (z <= Height && !voxel->bIsSolid)
 				{
 					SetVoxelByCoordinates(x, y, z, Filler);
 				}
-				else if (z > Height && voxel.bIsSolid)
+				else if (z > Height && voxel->bIsSolid)
 				{
-					SetVoxelByCoordinates(x, y, z, FVoxel());
+					SetVoxelByCoordinates(x, y, z, UVoxel::GetEmptyVoxel());
 				}
 			}
 		}
 	}
 }
 
-void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>& Heights, const FVoxel& Filler)
+void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>& Heights, UVoxel* Filler)
 {
 	TArray<float> resizedHeights;
 	int32 regionWidth = URegionHelper::GetWidthInCells(Region);
@@ -114,14 +114,14 @@ void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>&
 				}
 				else
 				{
-					SetVoxelByCoordinates(x, y, z, FVoxel());
+					SetVoxelByCoordinates(x, y, z, UVoxel::GetEmptyVoxel());
 				}
 			}
 		}
 	}
 }
 
-void ABaseVolume::SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, const FVoxel& Filler)
+void ABaseVolume::SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, UVoxel* Filler)
 {
 	if (Texture == NULL)
 	{
@@ -186,13 +186,13 @@ void ABaseVolume::SetRegionMaterials(const FRegion& Region, const TArray<uint8>&
 			// We go "backwards" and start from the top of the region downward
 			for (int z = Region.UpperZ - 1; z >= Region.LowerZ; z--)
 			{
-				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (voxel.bIsSolid)
+				UVoxel* voxel = GetVoxelByCoordinates(x, y, z);
+				if (voxel->bIsSolid)
 				{
 					currentVoxelDepth++;
 					if (currentVoxelDepth >= BeginAtDepth && currentVoxelDepth < PenetrateDistance)
 					{
-						voxel.Material = UArrayHelper::Get2DUint8(Materials, x, y, URegionHelper::GetWidthInVoxels(Region));
+						voxel->Material = UArrayHelper::Get2DUint8(Materials, x, y, URegionHelper::GetWidthInVoxels(Region));
 						SetVoxelByCoordinates(x, y, z, voxel);
 					}
 					else if (currentVoxelDepth + BeginAtDepth >= PenetrateDistance)
@@ -214,8 +214,8 @@ void ABaseVolume::DrawVolumeAsDebug(const FRegion& DebugRegion)
 		{
 			for (int z = DebugRegion.LowerZ; z < DebugRegion.UpperZ; z++)
 			{
-				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (!voxel.bIsSolid)
+				UVoxel* voxel = GetVoxelByCoordinates(x, y, z);
+				if (!voxel->bIsSolid)
 				{
 					continue;
 				}

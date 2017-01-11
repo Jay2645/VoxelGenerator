@@ -85,7 +85,7 @@ void APagedVolume::InitializeVolume(TSubclassOf<UPager> VolumePager, int32 Targe
 	UE_LOG(LogPolyVox, Log, TEXT("Memory usage limit for volume now set to %d MB (%d chunks of %d KB each)."), ((ChunkCountLimit * ChunkSizeInBytes) / (1024 * 1024)), ChunkCountLimit, (ChunkSizeInBytes / 1024));
 }
 
-FVoxel APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
+UVoxel* APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 {
 	const int32 chunkX = XPos >> ChunkSideLengthPower;
 	const int32 chunkY = YPos >> ChunkSideLengthPower;
@@ -97,15 +97,15 @@ FVoxel APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 
 	auto pChunk = CanReuseLastAccessedChunk(chunkX, chunkY, chunkZ) ? LastAccessedChunk : GetChunk(chunkX, chunkY, chunkZ);
 
-	return pChunk->GetVoxelFromCoordinates(xOffset, yOffset, zOffset);
+	return pChunk->GetVoxelByCoordinates(xOffset, yOffset, zOffset);
 }
 
-FVoxel APagedVolume::GetVoxelByVector(const FVector& Coordinates)
+UVoxel* APagedVolume::GetVoxelByVector(const FVector& Coordinates)
 {
 	return GetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z);
 }
 
-void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, const FVoxel& Voxel)
+void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Voxel)
 {
 	const int32 chunkX = XPos >> ChunkSideLengthPower;
 	const int32 chunkY = YPos >> ChunkSideLengthPower;
@@ -120,7 +120,7 @@ void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, con
 	pChunk->SetVoxelFromCoordinates(xOffset, yOffset, zOffset, Voxel);
 }
 
-void APagedVolume::SetVoxelByVector(const FVector& Coordinates, const FVoxel& Voxel)
+void APagedVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)
 {
 	SetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z, Voxel);
 }

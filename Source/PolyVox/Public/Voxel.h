@@ -1,8 +1,7 @@
 /*******************************************************************************
 The MIT License (MIT)
 
-Copyright (c) 2015 David Williams and Matthew Williams
-Modified for use in Unreal Engine 4 by Jay Stevens
+Copyright (c) 2017 Jay Stevens
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,53 +24,30 @@ SOFTWARE.
 
 #pragma once
 
-#include "UObject/NoExportTypes.h"
-#include "RegionHelper.h"
-#include "Paging/PagedChunk.h"
-#include "BaseVolume.h"
-#include "VolumeSampler.generated.h"
+#include "Engine/DataAsset.h"
+#include "Voxel.generated.h"
 
 /**
  * 
  */
 UCLASS(BlueprintType)
-class POLYVOX_API UVolumeSampler : public UObject
+class POLYVOX_API UVoxel : public UDataAsset
 {
 	GENERATED_BODY()
-public:
-	void Initalize(ABaseVolume* VolumeData);
-	UVoxel* GetVoxel();
-	void SetPosition(int32 XPos, int32 YPos, int32 ZPos);
-	void MoveNegativeX();
-	void MovePositiveX();
-	void MoveNegativeY();
-	void MovePositiveY();
-	void MoveNegativeZ();
-	void MovePositiveZ();
+public:	
+	// An index referring to this voxel's "Material."
+	// This can be either a UENUM or a hardcoded uint8 value.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
+	uint8 Material;
+	// Whether this voxel is solid or air.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
+	bool bIsSolid;
 
-private:
-	UPROPERTY()
-	ABaseVolume* Volume;
+	UVoxel();
 
-	//The current position in the volume
-	UPROPERTY()
-	int32 XPosInVolume;
-	UPROPERTY()
-	int32 YPosInVolume;
-	UPROPERTY()
-	int32 ZPosInVolume;
+	UFUNCTION(BlueprintPure, Category = "Voxel")
+	static UVoxel* GetEmptyVoxel();
 
-	UPROPERTY()
-	int32 CurrentVoxelIndex;
-	UPROPERTY()
-	UPagedChunk* CurrentChunk;
-
-	UPROPERTY()
-	int32 XPosInChunk;
-	UPROPERTY()
-	int32 YPosInChunk;
-	UPROPERTY()
-	int32 ZPosInChunk;
-
-	uint16 ChunkSideLengthMinusOne;
+	UFUNCTION(BlueprintPure, Category = "Voxel")
+	static UVoxel* MakeVoxel(uint8 MaterialID, bool bShouldBeSolid);
 };

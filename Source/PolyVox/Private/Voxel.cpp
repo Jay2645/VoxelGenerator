@@ -1,8 +1,7 @@
 /*******************************************************************************
 The MIT License (MIT)
 
-Copyright (c) 2015 David Williams and Matthew Williams
-Modified for use in Unreal Engine 4 by Jay Stevens
+Copyright (c) 2017 Jay Stevens
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,55 +22,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *******************************************************************************/
 
-#pragma once
+#include "PolyVoxPrivatePCH.h"
+#include "Voxel.h"
 
-#include "UObject/NoExportTypes.h"
-#include "RegionHelper.h"
-#include "Paging/PagedChunk.h"
-#include "BaseVolume.h"
-#include "VolumeSampler.generated.h"
-
-/**
- * 
- */
-UCLASS(BlueprintType)
-class POLYVOX_API UVolumeSampler : public UObject
+UVoxel::UVoxel()
 {
-	GENERATED_BODY()
-public:
-	void Initalize(ABaseVolume* VolumeData);
-	UVoxel* GetVoxel();
-	void SetPosition(int32 XPos, int32 YPos, int32 ZPos);
-	void MoveNegativeX();
-	void MovePositiveX();
-	void MoveNegativeY();
-	void MovePositiveY();
-	void MoveNegativeZ();
-	void MovePositiveZ();
+	Material = 0;
+	bIsSolid = false;
+}
 
-private:
-	UPROPERTY()
-	ABaseVolume* Volume;
+UVoxel* UVoxel::GetEmptyVoxel()
+{
+	return MakeVoxel(0, false);
+}
 
-	//The current position in the volume
-	UPROPERTY()
-	int32 XPosInVolume;
-	UPROPERTY()
-	int32 YPosInVolume;
-	UPROPERTY()
-	int32 ZPosInVolume;
-
-	UPROPERTY()
-	int32 CurrentVoxelIndex;
-	UPROPERTY()
-	UPagedChunk* CurrentChunk;
-
-	UPROPERTY()
-	int32 XPosInChunk;
-	UPROPERTY()
-	int32 YPosInChunk;
-	UPROPERTY()
-	int32 ZPosInChunk;
-
-	uint16 ChunkSideLengthMinusOne;
-};
+UVoxel* UVoxel::MakeVoxel(uint8 MaterialID, bool bShouldBeSolid)
+{
+	UVoxel* voxel = NewObject<UVoxel>();
+	voxel->Material = MaterialID;
+	voxel->bIsSolid = bShouldBeSolid;
+	return voxel;
+}

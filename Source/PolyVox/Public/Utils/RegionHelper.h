@@ -26,11 +26,12 @@ SOFTWARE.
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Voxel.h"
 #include "RegionHelper.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPolyVox, Log, All);
 
-USTRUCT(BlueprintType)
+/*USTRUCT(BlueprintType)
 struct POLYVOX_API FVoxel
 {
 	GENERATED_BODY()
@@ -46,9 +47,9 @@ public:
 	FVoxel()
 	{
 		Material = 0;
-		bIsSolid = true;
+		bIsSolid = false;
 	}
-};
+}*/
 
 /** Represents a part of a Volume.
 *

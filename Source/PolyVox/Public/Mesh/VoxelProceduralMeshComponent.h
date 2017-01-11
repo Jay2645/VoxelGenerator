@@ -40,7 +40,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	FVector Position;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
-	FVoxel Data;
+	UVoxel* Data;
 };
 
 USTRUCT(BlueprintType)

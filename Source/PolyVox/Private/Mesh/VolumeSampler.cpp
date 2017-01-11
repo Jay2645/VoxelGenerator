@@ -53,7 +53,7 @@ void UVolumeSampler::Initalize(ABaseVolume* VolumeData)
 	Volume = VolumeData;
 }
 
-FVoxel UVolumeSampler::GetVoxel()
+UVoxel* UVolumeSampler::GetVoxel()
 {
 	uint8 sideLengthPower = Volume->GetSideLengthPower();
 	if (CurrentChunk == NULL)
@@ -63,11 +63,15 @@ FVoxel UVolumeSampler::GetVoxel()
 	}
 	else
 	{
-		TArray<FVoxel> data = CurrentChunk->GetData();
+		TArray<UVoxel*> data = CurrentChunk->GetData();
 		if (CurrentVoxelIndex < 0 || CurrentVoxelIndex >= data.Num())
 		{
 			UE_LOG(LogPolyVox, Warning, TEXT("Current voxel index %d was out of range!"), CurrentVoxelIndex);
-			return FVoxel();
+			return UVoxel::GetEmptyVoxel();
+		}
+		if (data[CurrentVoxelIndex] == NULL)
+		{
+			return UVoxel::GetEmptyVoxel();
 		}
 		return data[CurrentVoxelIndex];
 	}

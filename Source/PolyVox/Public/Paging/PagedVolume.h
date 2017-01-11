@@ -46,14 +46,14 @@ public:
 	void InitializeVolume(TSubclassOf<UPager> VolumePager, int32 TargetMemoryUsageInBytes = 268435456, uint8 VolumeChunkSideLength = 32);
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
+	virtual UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual FVoxel GetVoxelByVector(const FVector& Coordinates) override;
+	virtual UVoxel* GetVoxelByVector(const FVector& Coordinates) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, const FVoxel& Voxel) override;
+	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Voxel) override;
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByVector(const FVector& Coordinates, const FVoxel& Voxel) override;
+	virtual void SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel) override;
 
 	/// Tries to ensure that the voxels within the specified Region are loaded into memory.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")

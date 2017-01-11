@@ -86,7 +86,7 @@ void UPagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	bDataModified = false;
 }
 
-TArray<FVoxel> UPagedChunk::GetData() const
+TArray<UVoxel*> UPagedChunk::GetData() const
 {
 	return VoxelData;
 }
@@ -96,7 +96,7 @@ int32 UPagedChunk::GetDataSizeInBytes() const
 	return CalculateSizeInBytes(SideLength);
 }
 
-FVoxel UPagedChunk::GetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos) const
+UVoxel* UPagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -107,15 +107,19 @@ FVoxel UPagedChunk::GetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos) 
 
 	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
 
+	if (VoxelData[index] == NULL)
+	{
+		VoxelData[index] = UVoxel::GetEmptyVoxel();
+	}
 	return VoxelData[index];
 }
 
-FVoxel UPagedChunk::GetVoxelFromVector(const FVector& Pos) const
+UVoxel* UPagedChunk::GetVoxelByVector(const FVector& Pos)
 {
-	return GetVoxelFromCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z);
+	return GetVoxelByCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z);
 }
 
-void UPagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value)
+void UPagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -131,7 +135,7 @@ void UPagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, FV
 	bDataModified = true;
 }
 
-void UPagedChunk::SetVoxelFromVector(const FVector& Pos, FVoxel Value)
+void UPagedChunk::SetVoxelFromVector(const FVector& Pos, UVoxel* Value)
 {
 	SetVoxelFromCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z, Value);
 }
@@ -140,5 +144,5 @@ int32 UPagedChunk::CalculateSizeInBytes(uint8 ChunkSideLength)
 {
 	// Note: We disregard the size of the other class members as they are likely to be very small compared to the size of the
 	// allocated voxel data. This also keeps the reported size as a power of two, which makes other memory calculations easier.
-	return ChunkSideLength * ChunkSideLength * ChunkSideLength * sizeof(FVoxel);
+	return ChunkSideLength * ChunkSideLength * ChunkSideLength * sizeof(UVoxel);
 }

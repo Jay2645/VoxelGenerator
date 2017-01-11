@@ -27,9 +27,9 @@ SOFTWARE.
 #include "MarchingCubesDefaultController.h"
 
 
-uint8 UMarchingCubesDefaultController::ConvertToDensity(const FVoxel& Voxel)
+uint8 UMarchingCubesDefaultController::ConvertToDensity(UVoxel* Voxel)
 {
-	if (Voxel.bIsSolid)
+	if (Voxel->bIsSolid)
 	{
 		return 255;
 	}
@@ -39,7 +39,7 @@ uint8 UMarchingCubesDefaultController::ConvertToDensity(const FVoxel& Voxel)
 	}
 }
 
-FVoxel UMarchingCubesDefaultController::BlendMaterials(const FVoxel& FirstVoxel, const FVoxel& SecondVoxel, const float Interpolation)
+UVoxel* UMarchingCubesDefaultController::BlendMaterials(UVoxel* FirstVoxel, UVoxel* SecondVoxel, const float Interpolation)
 {
 	if (ConvertToDensity(FirstVoxel) > ConvertToDensity(SecondVoxel))
 	{

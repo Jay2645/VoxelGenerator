@@ -49,19 +49,19 @@ public:
 	void RemoveChunk();
 
 	UFUNCTION(BlueprintPure, Category="Chunk|Voxels")
-	TArray<FVoxel> GetData() const;
+	TArray<UVoxel*> GetData() const;
 	UFUNCTION(BlueprintPure, Category = "Chunk|Size")
 	int32 GetDataSizeInBytes() const;
 
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	FVoxel GetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos) const;
+	UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	FVoxel GetVoxelFromVector(const FVector& Pos) const;
+	UVoxel* GetVoxelByVector(const FVector& Pos);
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value);
+	void SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelFromVector(const FVector& Pos, FVoxel Value);
+	void SetVoxelFromVector(const FVector& Pos, UVoxel* Value);
 private:
 	static int32 CalculateSizeInBytes(uint8 ChunkSideLength);
 
@@ -75,7 +75,7 @@ private:
 	bool bDataModified;
 
 	UPROPERTY()
-	TArray<FVoxel> VoxelData;
+	TArray<UVoxel*> VoxelData;
 	UPROPERTY()
 	uint8 SideLength;
 	UPROPERTY()
