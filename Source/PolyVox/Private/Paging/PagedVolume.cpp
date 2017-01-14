@@ -29,6 +29,8 @@ SOFTWARE.
 APagedVolume::APagedVolume()
 {
 	ArrayChunks.SetNumZeroed(CHUNK_ARRAY_SIZE);
+	VolumePager = UPager::StaticClass();
+	ChunkSideLength = 32;
 }
 
 APagedVolume::~APagedVolume()
@@ -36,14 +38,19 @@ APagedVolume::~APagedVolume()
 	//FlushAll();
 }
 
-void APagedVolume::InitializeVolume(TSubclassOf<UPager> VolumePager, int32 TargetMemoryUsageInBytes /*= 256 * 1024 * 1024*/, uint8 VolumeChunkSideLength /*= 32*/)
+void APagedVolume::BeginPlay()
 {
-	if (VolumePager == NULL)
+	InitializeVolume(VolumePager, TargetMemoryUsageInBytes, ChunkSideLength);
+}
+
+void APagedVolume::InitializeVolume(TSubclassOf<UPager> PagerClass, int32 MemoryUsageInBytes /*= 256 * 1024 * 1024*/, uint8 VolumeChunkSideLength /*= 32*/)
+{
+	if (PagerClass == NULL)
 	{
 		UE_LOG(LogPolyVox, Fatal, TEXT("A valid pager must be specified to use a PagedVolume."));
 		return;
 	}
-	if (TargetMemoryUsageInBytes < 1 * 1024 * 1024)
+	if (MemoryUsageInBytes < 1 * 1024 * 1024)
 	{
 		UE_LOG(LogPolyVox, Fatal, TEXT("Target memory usage is too small to be practical."));
 		return;
@@ -67,19 +74,19 @@ void APagedVolume::InitializeVolume(TSubclassOf<UPager> VolumePager, int32 Targe
 
 	// Calculate the number of chunks based on the memory limit and the size of each chunk.
 	int32 ChunkSizeInBytes = UPagedChunk::CalculateSizeInBytes(ChunkSideLength);
-	ChunkCountLimit = TargetMemoryUsageInBytes / ChunkSizeInBytes;
+	ChunkCountLimit = MemoryUsageInBytes / ChunkSizeInBytes;
 
 	// Enforce sensible limits on the number of chunks.
 	const int32 MinPracticalNoOfChunks = 32; // Enough to make sure a chunks and it's neighbors can be loaded, with a few to spare.
 	const int32 MaxPracticalNoOfChunks = CHUNK_ARRAY_SIZE / 2; // A hash table should only become half-full to avoid too many clashes.
 	if(ChunkCountLimit < MinPracticalNoOfChunks)
 	{
-		UE_LOG(LogPolyVox, Warning, TEXT("Requested memory usage limit of %d MB is too low and cannot be adhered to."), (TargetMemoryUsageInBytes / (1024 * 1024)));
+		UE_LOG(LogPolyVox, Warning, TEXT("Requested memory usage limit of %d MB is too low and cannot be adhered to."), (MemoryUsageInBytes / (1024 * 1024)));
 	}
 	ChunkCountLimit = FMath::Max(ChunkCountLimit, MinPracticalNoOfChunks);
 	ChunkCountLimit = FMath::Min(ChunkCountLimit, MaxPracticalNoOfChunks);
 
-	Pager = NewObject<UPager>((UObject*)GetTransientPackage(), VolumePager,NAME_None);
+	Pager = NewObject<UPager>((UObject*)GetTransientPackage(), PagerClass, NAME_None);
 
 	// Inform the user about the chosen memory configuration.
 	UE_LOG(LogPolyVox, Log, TEXT("Memory usage limit for volume now set to %d MB (%d chunks of %d KB each)."), ((ChunkCountLimit * ChunkSizeInBytes) / (1024 * 1024)), ChunkCountLimit, (ChunkSizeInBytes / 1024));

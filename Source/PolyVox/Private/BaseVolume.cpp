@@ -121,6 +121,36 @@ void ABaseVolume::SetRegionHeightmap(const FRegion& Region, const TArray<float>&
 	}
 }
 
+void ABaseVolume::SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<uint8>& Materials)
+{
+	if (Heights.Num() != Materials.Num())
+	{
+		UE_LOG(LogPolyVox, Warning, TEXT("Height and Materials array size does not match. Heights: %d, Materials: %d"), Heights.Num(), Materials.Num());
+	}
+
+	int32 regionWidth = URegionHelper::GetWidthInCells(Region);
+	for (int x = Region.LowerX; x < Region.UpperX; x++)
+	{
+		for (int y = Region.LowerY; y < Region.UpperY; y++)
+		{
+			float targetHeightPercent = UArrayHelper::Get2DFloat(Heights, x, y, regionWidth);
+			int32 targetHeight = FMath::CeilToInt(URegionHelper::GetDepthInCells(Region) * targetHeightPercent);
+			uint8 targetMaterial = UArrayHelper::Get2DUint8(Materials, x, y, regionWidth);
+			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
+			{
+				if (z <= targetHeight)
+				{
+					SetVoxelByCoordinates(x, y, z, UVoxel::MakeVoxel(targetMaterial, true));
+				}
+				else
+				{
+					SetVoxelByCoordinates(x, y, z, UVoxel::GetEmptyVoxel());
+				}
+			}
+		}
+	}
+}
+
 void ABaseVolume::SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, UVoxel* Filler)
 {
 	if (Texture == NULL)

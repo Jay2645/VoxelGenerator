@@ -67,6 +67,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 	void SetRegionHeightmap(const FRegion& Region, const TArray<float>& Heights, UVoxel* Filler);
 
+	// This changes a region to reflect a given heightmap.
+	// This heightmap should be a 2D array, with dimensions the same as the width (x) and height (y) of the region being passed into it.
+	// The Voxel passed into this function is used for any solid voxels in the heightmap.
+	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
+	void SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<uint8>& Materials);
+
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 	void SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, UVoxel* Filler);
 

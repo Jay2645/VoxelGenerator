@@ -41,9 +41,15 @@ public:
 	APagedVolume();
 	~APagedVolume();
 
-	UFUNCTION(BlueprintCallable, Category = "Volume")
-	// 256 * 1024 * 1024 = 268435456
-	void InitializeVolume(TSubclassOf<UPager> VolumePager, int32 TargetMemoryUsageInBytes = 268435456, uint8 VolumeChunkSideLength = 32);
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pager")
+	TSubclassOf<UPager> VolumePager;
+	UPROPERTY()
+	int32 TargetMemoryUsageInBytes = 268435456;
+	// The size of the chunks
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chunk")
+	uint8 ChunkSideLength;
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
 	virtual UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
@@ -96,9 +102,6 @@ private:
 	UPROPERTY()
 	TArray<UPagedChunk*> ArrayChunks;
 
-	// The size of the chunks
-	UPROPERTY()
-	uint8 ChunkSideLength;
 	UPROPERTY()
 	uint8 ChunkSideLengthPower;
 	UPROPERTY()
@@ -106,4 +109,8 @@ private:
 
 	UPROPERTY()
 	UPager* Pager = nullptr;
+
+	UFUNCTION()
+	// 256 * 1024 * 1024 = 268435456
+	void InitializeVolume(TSubclassOf<UPager> PagerClass, int32 MemoryUsageInBytes = 268435456, uint8 VolumeChunkSideLength = 32);
 };
