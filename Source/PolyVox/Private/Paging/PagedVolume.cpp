@@ -179,6 +179,7 @@ void APagedVolume::PageInChunksAroundPlayer(AController* PlayerController, const
 	regionCenter.Z = 0.0f;
 	FVector regionExtents = FVector(NumberOfChunksToPageIn * ChunkSideLength, NumberOfChunksToPageIn * ChunkSideLength, MaxWorldHeight);
 	FRegion pageInRegion = URegionHelper::CreateRegionFromVector(regionCenter - regionExtents, regionCenter + regionExtents);
+	UE_LOG(LogPolyVox, Log, TEXT("Paging in %d chunks around player position (%f, %f, %f), creating a region (%d, %d, %d) to (%d, %d, %d)."), NumberOfChunksToPageIn, regionCenter.X, regionCenter.Y, regionCenter.Z, pageInRegion.LowerX, pageInRegion.LowerY, pageInRegion.LowerZ, pageInRegion.UpperX, pageInRegion.UpperY, pageInRegion.UpperZ);
 	if (bUseMarchingCubes)
 	{
 		CreateMarchingCubesMesh(pageInRegion, Materials);
@@ -244,45 +245,6 @@ void APagedVolume::FlushAll()
 		}
 	}
 	ArrayChunks.Empty();
-}
-
-
-bool APagedVolume::RegionIsEmpty(const FRegion& Region)
-{
-	// Store some commonly used values for performance and convenience
-	const uint32 uRegionWidthInVoxels = (uint32)URegionHelper::GetWidthInVoxels(Region);
-	const uint32 uRegionHeightInVoxels = (uint32)URegionHelper::GetHeightInVoxels(Region);
-	const uint32 uRegionDepthInVoxels = (uint32)URegionHelper::GetDepthInVoxels(Region);
-
-	UVolumeSampler startOfSlice(this);
-	startOfSlice.SetPosition(URegionHelper::GetLowerX(Region), URegionHelper::GetLowerY(Region), URegionHelper::GetLowerZ(Region));
-
-	for (uint32 uZRegSpace = 0; uZRegSpace < uRegionDepthInVoxels; uZRegSpace++)
-	{
-		// A sampler pointing at the beginning of the slice, which gets incremented to always point at the beginning of a row.
-		UVolumeSampler startOfRow(startOfSlice);
-
-		for (uint32 uYRegSpace = 0; uYRegSpace < uRegionHeightInVoxels; uYRegSpace++)
-		{
-			// Copying a sampler which is already pointing at the correct location seems (slightly) faster than
-			// calling setPosition(). Therefore we make use of 'startOfRow' and 'startOfSlice' to reset the sampler.
-			UVolumeSampler sampler(startOfRow);
-
-			for (uint32 uXRegSpace = 0; uXRegSpace < uRegionWidthInVoxels; uXRegSpace++)
-			{
-
-				UVoxel* v111 = sampler.GetVoxel();
-				if (v111->bIsSolid)
-				{
-					return false;
-				}
-				sampler.MovePositiveX();
-			} // For X
-			startOfRow.MovePositiveY();
-		} // For Y
-		startOfSlice.MovePositiveZ();
-	} // For Z
-	return true;
 }
 
 int32 APagedVolume::CalculateSizeInBytes() const

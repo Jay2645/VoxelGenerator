@@ -73,8 +73,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
 	void FlushAll();
 
-	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
-	virtual bool RegionIsEmpty(const FRegion& Region) override;
+	//UFUNCTION(BlueprintPure, Category = "Volume|Utility")
+	//virtual bool RegionIsEmpty(const FRegion& Region) override;
 	
 	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
 	virtual int32 CalculateSizeInBytes() const override;

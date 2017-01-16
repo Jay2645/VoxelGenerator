@@ -34,7 +34,6 @@ APagedChunk::APagedChunk()
 {
 	VoxelMesh = CreateDefaultSubobject<UVoxelProceduralMeshComponent>(TEXT("Voxel Mesh Component"));
 	RootComponent = VoxelMesh;
-	ChunkRegion = FRegion();
 }
 
 APagedChunk::~APagedChunk()
@@ -116,8 +115,7 @@ UVoxel* APagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
-	//checkf(((uint32)VoxelData.Num()) > index, TEXT("Index %d was out of bounds! Voxel Data size %d, coordinates (%d, %d, %d)"), index, VoxelData.Num(), XPos, YPos, ZPos);
+	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
 
 	if (VoxelData[index] == NULL)
 	{
@@ -140,7 +138,7 @@ void APagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UV
 	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
 
 	VoxelData[index] = Value;
 
