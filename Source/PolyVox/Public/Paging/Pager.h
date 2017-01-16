@@ -29,7 +29,7 @@ SOFTWARE.
 #include "RegionHelper.h"
 #include "Pager.generated.h"
 
-class UPagedChunk;
+class APagedChunk;
 
 /** 
 * Users can override this class and provide an instance of the derived class to the PagedVolume constructor. This derived class
@@ -47,11 +47,11 @@ public:
 	virtual ~UPager() {};
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Pager")
-	void PageIn(const FRegion& Region, UPagedChunk* Chunk);
+	void PageIn(const FRegion& Region, APagedChunk* Chunk);
 	UFUNCTION(BlueprintNativeEvent, Category = "Pager")
-	void PageOut(const FRegion& Region, UPagedChunk* Chunk);
+	void PageOut(const FRegion& Region, APagedChunk* Chunk);
 
 protected:
-	virtual void PageIn_Implementation(const FRegion& Region, UPagedChunk* Chunk);
-	virtual void PageOut_Implementation(const FRegion& Region, UPagedChunk* Chunk);
+	virtual void PageIn_Implementation(const FRegion& Region, APagedChunk* Chunk);
+	virtual void PageOut_Implementation(const FRegion& Region, APagedChunk* Chunk);
 };

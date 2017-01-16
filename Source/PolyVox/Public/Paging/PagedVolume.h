@@ -28,6 +28,7 @@ SOFTWARE.
 #include "BaseVolume.h"
 #include "Pager.h"
 #include "PagedChunk.h"
+#include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedVolume.generated.h"
 
 /**
@@ -42,6 +43,7 @@ public:
 	~APagedVolume();
 
 	virtual void BeginPlay() override;
+	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pager")
 	TSubclassOf<UPager> VolumePager;
@@ -61,23 +63,38 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 	virtual void SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel) override;
 
-	/// Tries to ensure that the voxels within the specified Region are loaded into memory.
+	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
+	virtual void PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes);
+
+	// Tries to ensure that the voxels within the specified Region are loaded into memory.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
-	void Prefetch(FRegion PrefetchRegion);
-	/// Removes all voxels from memory
+	TArray<APagedChunk*> Prefetch(FRegion PrefetchRegion);
+	// Removes all voxels from memory
 	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
 	void FlushAll();
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
+	virtual bool RegionIsEmpty(const FRegion& Region) override;
+	
+	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
 	virtual int32 CalculateSizeInBytes() const override;
+
+	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
+	void CreateMarchingCubesMesh(FRegion Region, TArray<FVoxelMaterial> VoxelMaterials);
 
 	virtual uint8 GetSideLengthPower() const override;
 	bool CanReuseLastAccessedChunk(int32 iChunkX, int32 iChunkY, int32 iChunkZ) const;
-	UPagedChunk* GetChunk(int32 uChunkX, int32 uChunkY, int32 uChunkZ);
+	APagedChunk* GetChunk(int32 uChunkX, int32 uChunkY, int32 uChunkZ);
 	UPROPERTY()
-	UPagedChunk* LastAccessedChunk = nullptr;
+	APagedChunk* LastAccessedChunk = nullptr;
 
 private:
+	TQueue<APagedChunk*> ChunksToCreateMesh;
+	UPROPERTY()
+	APagedChunk* ChunkCurrentlyMakingMeshFor;
+	UPROPERTY()
+	TArray<FVoxelMaterial> ChunkMaterials;
+
 	UPROPERTY()
 	int32 LastAccessedChunkX = 0;
 	UPROPERTY()
@@ -100,7 +117,7 @@ private:
 	// just be 1Mb or so.
 	static const uint32 CHUNK_ARRAY_SIZE = 65536;
 	UPROPERTY()
-	TArray<UPagedChunk*> ArrayChunks;
+	TArray<APagedChunk*> ArrayChunks;
 
 	UPROPERTY()
 	uint8 ChunkSideLengthPower;

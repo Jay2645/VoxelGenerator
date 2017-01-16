@@ -25,11 +25,19 @@ SOFTWARE.
 
 #include "PolyVoxPrivatePCH.h"
 #include "Utils/Morton.h"
+#include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedChunk.h"
 
 #define DO_CHECK = 1
 
-UPagedChunk::~UPagedChunk()
+APagedChunk::APagedChunk()
+{
+	VoxelMesh = CreateDefaultSubobject<UVoxelProceduralMeshComponent>(TEXT("Voxel Mesh Component"));
+	RootComponent = VoxelMesh;
+	ChunkRegion = FRegion();
+}
+
+APagedChunk::~APagedChunk()
 {
 	if (VoxelData.Num() > 0)
 	{
@@ -37,7 +45,7 @@ UPagedChunk::~UPagedChunk()
 	}
 }
 
-void UPagedChunk::RemoveChunk()
+void APagedChunk::RemoveChunk()
 {
 	if (bDataModified && Pager)
 	{
@@ -46,7 +54,7 @@ void UPagedChunk::RemoveChunk()
 		FVector v3dUpper = v3dLower + FVector(SideLength - 1, SideLength - 1, SideLength - 1);
 
 		// Page the data out
-		//Pager->PageOut(URegionHelper::CreateRegionFromVector(v3dLower, v3dUpper), this); // This is causing a crash on unload somehow
+		//Pager->PageOut(ChunkRegion, this); // This is causing a crash on unload somehow
 
 		bDataModified = false;
 	}
@@ -54,9 +62,10 @@ void UPagedChunk::RemoveChunk()
 	VoxelData.Empty();
 }
 
-void UPagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/)
+void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/)
 {
 	ChunkSpacePosition = Position;
+	//SetActorLocation(Position * ChunkSideLength * 100.0f);
 	SideLength = ChunkSideLength;
 	SideLengthPower = FMath::Log2(SideLength);
 	Pager = VoxelPager;
@@ -76,27 +85,29 @@ void UPagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	// Pass the chunk to the Pager to give it a chance to initialize it with any data
 	// From the coordinates of the chunk we deduce the coordinates of the contained voxels.
 	FVector v3dLower = ChunkSpacePosition * (int32)(SideLength);
-	FVector v3dUpper = v3dLower + FVector(SideLength - 1, SideLength - 1, SideLength - 1);
-	FRegion reg = URegionHelper::CreateRegionFromVector(v3dLower, v3dUpper);
-
+	FVector v3dUpper = v3dLower + FVector(SideLength, SideLength, SideLength);
+	ChunkRegion = URegionHelper::CreateRegionFromVector(v3dLower, v3dUpper);
+	//FString chunkName = TEXT("Chunk ("+ChunkRegion.LowerX+", "+ChunkRegion.LowerY+", "+ChunkRegion.LowerZ+") - ("+ChunkRegion.UpperX+", "+ChunkRegion.UpperY+", "+ChunkRegion.UpperZ+")";
+	//Rename(TEXT(chunkName));
 	// Page the data in
-	Pager->PageIn(reg, this);
+	Pager->PageIn(ChunkRegion, this);
 
 	// We'll use this later to decide if data needs to be paged out again.
 	bDataModified = false;
+	bNeedsNewMarchingCubesMesh = true;
 }
 
-TArray<UVoxel*> UPagedChunk::GetData() const
+TArray<UVoxel*> APagedChunk::GetData() const
 {
 	return VoxelData;
 }
 
-int32 UPagedChunk::GetDataSizeInBytes() const
+int32 APagedChunk::GetDataSizeInBytes() const
 {
 	return CalculateSizeInBytes(SideLength);
 }
 
-UVoxel* UPagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
+UVoxel* APagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -105,7 +116,8 @@ UVoxel* UPagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	//checkf(((uint32)VoxelData.Num()) > index, TEXT("Index %d was out of bounds! Voxel Data size %d, coordinates (%d, %d, %d)"), index, VoxelData.Num(), XPos, YPos, ZPos);
 
 	if (VoxelData[index] == NULL)
 	{
@@ -114,12 +126,12 @@ UVoxel* UPagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 	return VoxelData[index];
 }
 
-UVoxel* UPagedChunk::GetVoxelByVector(const FVector& Pos)
+UVoxel* APagedChunk::GetVoxelByVector(const FVector& Pos)
 {
 	return GetVoxelByCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z);
 }
 
-void UPagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
+void APagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -128,19 +140,30 @@ void UPagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UV
 	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
 
 	VoxelData[index] = Value;
 
 	bDataModified = true;
+	bNeedsNewMarchingCubesMesh = true;
 }
 
-void UPagedChunk::SetVoxelFromVector(const FVector& Pos, UVoxel* Value)
+void APagedChunk::SetVoxelFromVector(const FVector& Pos, UVoxel* Value)
 {
 	SetVoxelFromCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z, Value);
 }
 
-int32 UPagedChunk::CalculateSizeInBytes(uint8 ChunkSideLength)
+void APagedChunk::CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials)
+{
+	if(bNeedsNewMarchingCubesMesh)
+	{
+		UE_LOG(LogPolyVox, Log, TEXT("Creating PolyVox mesh for %s, region (%d, %d, %d) to (%d, %d, %d)"), *GetName(), ChunkRegion.LowerX, ChunkRegion.LowerY, ChunkRegion.LowerZ, ChunkRegion.UpperX, ChunkRegion.UpperY, ChunkRegion.UpperZ);
+		VoxelMesh->CreateMarchingCubesMesh(Volume, ChunkRegion, VoxelMaterials);
+	}
+	bNeedsNewMarchingCubesMesh = false;
+}
+
+int32 APagedChunk::CalculateSizeInBytes(uint8 ChunkSideLength)
 {
 	// Note: We disregard the size of the other class members as they are likely to be very small compared to the size of the
 	// allocated voxel data. This also keeps the reported size as a power of two, which makes other memory calculations easier.

@@ -31,6 +31,9 @@ APagedVolume::APagedVolume()
 	ArrayChunks.SetNumZeroed(CHUNK_ARRAY_SIZE);
 	VolumePager = UPager::StaticClass();
 	ChunkSideLength = 32;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = true;
+	bAllowTickBeforeBeginPlay = true;
 }
 
 APagedVolume::~APagedVolume()
@@ -41,6 +44,38 @@ APagedVolume::~APagedVolume()
 void APagedVolume::BeginPlay()
 {
 	InitializeVolume(VolumePager, TargetMemoryUsageInBytes, ChunkSideLength);
+}
+
+void APagedVolume::TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction)
+{
+	if (ChunkCurrentlyMakingMeshFor != NULL)
+	{
+		// We are working on making a chunk
+		if (!ChunkCurrentlyMakingMeshFor->bNeedsNewMarchingCubesMesh)
+		{
+			// Chunk is done being created; we don't need to work on the chunk anymore
+			ChunkCurrentlyMakingMeshFor = NULL;
+		}
+		else
+		{
+			// Chunk is still being worked on; wait a frame
+			return;
+		}
+	}
+	// At this point, we are no longer working on any chunk
+	if (ChunksToCreateMesh.IsEmpty())
+	{
+		// We have no chunks to make
+		return;
+	}
+	else
+	{
+		ChunksToCreateMesh.Dequeue(ChunkCurrentlyMakingMeshFor);
+		if(ChunkCurrentlyMakingMeshFor != NULL)
+		{
+			ChunkCurrentlyMakingMeshFor->CreateMarchingCubesMesh(this, ChunkMaterials);
+		}
+	}
 }
 
 void APagedVolume::InitializeVolume(TSubclassOf<UPager> PagerClass, int32 MemoryUsageInBytes /*= 256 * 1024 * 1024*/, uint8 VolumeChunkSideLength /*= 32*/)
@@ -73,7 +108,7 @@ void APagedVolume::InitializeVolume(TSubclassOf<UPager> PagerClass, int32 Memory
 	ChunkMask = ChunkSideLength - 1;
 
 	// Calculate the number of chunks based on the memory limit and the size of each chunk.
-	int32 ChunkSizeInBytes = UPagedChunk::CalculateSizeInBytes(ChunkSideLength);
+	int32 ChunkSizeInBytes = APagedChunk::CalculateSizeInBytes(ChunkSideLength);
 	ChunkCountLimit = MemoryUsageInBytes / ChunkSizeInBytes;
 
 	// Enforce sensible limits on the number of chunks.
@@ -132,7 +167,29 @@ void APagedVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)
 	SetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z, Voxel);
 }
 
-void APagedVolume::Prefetch(FRegion PrefetchRegion)
+void APagedVolume::PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes)
+{
+	if (PlayerController == NULL)
+	{
+		return;
+	}
+
+	APawn* playerPawn = PlayerController->GetPawn();
+	FVector regionCenter = playerPawn->GetActorLocation();
+	regionCenter.Z = 0.0f;
+	FVector regionExtents = FVector(NumberOfChunksToPageIn * ChunkSideLength, NumberOfChunksToPageIn * ChunkSideLength, MaxWorldHeight);
+	FRegion pageInRegion = URegionHelper::CreateRegionFromVector(regionCenter - regionExtents, regionCenter + regionExtents);
+	if (bUseMarchingCubes)
+	{
+		CreateMarchingCubesMesh(pageInRegion, Materials);
+	}
+	else
+	{
+		unimplemented();
+	}
+}
+
+TArray<APagedChunk*> APagedVolume::Prefetch(FRegion PrefetchRegion)
 {
 	// Convert the start and end positions into chunk space coordinates
 	FVector lowerCorner = URegionHelper::GetLowerCorner(PrefetchRegion);
@@ -157,16 +214,18 @@ void APagedVolume::Prefetch(FRegion PrefetchRegion)
 	noOfChunks = FMath::Min(noOfChunks, ChunkCountLimit);
 
 	// Loops over the specified positions and touch the corresponding chunks.
+	TArray<APagedChunk*> touchedChunks;
 	for (int32 x = start.X; x <= end.X; x++)
 	{
 		for (int32 y = start.Y; y <= end.Y; y++)
 		{
 			for (int32 z = start.Z; z <= end.Z; z++)
 			{
-				GetChunk(x, y, z);
+				touchedChunks.Add(GetChunk(x, y, z));
 			}
 		}
 	}
+	return touchedChunks;
 }
 
 void APagedVolume::FlushAll()
@@ -177,13 +236,53 @@ void APagedVolume::FlushAll()
 	// Erase all the most recently used chunks.
 	for (uint32 uIndex = 0; uIndex < CHUNK_ARRAY_SIZE; uIndex++)
 	{
-		UPagedChunk* chunk = ArrayChunks[uIndex];
+		APagedChunk* chunk = ArrayChunks[uIndex];
 		if (chunk != NULL)
 		{
 			chunk->RemoveChunk();
+			chunk->Destroy();
 		}
 	}
 	ArrayChunks.Empty();
+}
+
+
+bool APagedVolume::RegionIsEmpty(const FRegion& Region)
+{
+	// Store some commonly used values for performance and convenience
+	const uint32 uRegionWidthInVoxels = (uint32)URegionHelper::GetWidthInVoxels(Region);
+	const uint32 uRegionHeightInVoxels = (uint32)URegionHelper::GetHeightInVoxels(Region);
+	const uint32 uRegionDepthInVoxels = (uint32)URegionHelper::GetDepthInVoxels(Region);
+
+	UVolumeSampler startOfSlice(this);
+	startOfSlice.SetPosition(URegionHelper::GetLowerX(Region), URegionHelper::GetLowerY(Region), URegionHelper::GetLowerZ(Region));
+
+	for (uint32 uZRegSpace = 0; uZRegSpace < uRegionDepthInVoxels; uZRegSpace++)
+	{
+		// A sampler pointing at the beginning of the slice, which gets incremented to always point at the beginning of a row.
+		UVolumeSampler startOfRow(startOfSlice);
+
+		for (uint32 uYRegSpace = 0; uYRegSpace < uRegionHeightInVoxels; uYRegSpace++)
+		{
+			// Copying a sampler which is already pointing at the correct location seems (slightly) faster than
+			// calling setPosition(). Therefore we make use of 'startOfRow' and 'startOfSlice' to reset the sampler.
+			UVolumeSampler sampler(startOfRow);
+
+			for (uint32 uXRegSpace = 0; uXRegSpace < uRegionWidthInVoxels; uXRegSpace++)
+			{
+
+				UVoxel* v111 = sampler.GetVoxel();
+				if (v111->bIsSolid)
+				{
+					return false;
+				}
+				sampler.MovePositiveX();
+			} // For X
+			startOfRow.MovePositiveY();
+		} // For Y
+		startOfSlice.MovePositiveZ();
+	} // For Z
+	return true;
 }
 
 int32 APagedVolume::CalculateSizeInBytes() const
@@ -199,7 +298,18 @@ int32 APagedVolume::CalculateSizeInBytes() const
 
 	// Note: We disregard the size of the other class members as they are likely to be very small compared to the size of the
 	// allocated voxel data. This also keeps the reported size as a power of two, which makes other memory calculations easier.
-	return UPagedChunk::CalculateSizeInBytes(ChunkSideLength) * uChunkCount;
+	return APagedChunk::CalculateSizeInBytes(ChunkSideLength) * uChunkCount;
+}
+
+void APagedVolume::CreateMarchingCubesMesh(FRegion Region, TArray<FVoxelMaterial> VoxelMaterials)
+{
+	ChunkMaterials = VoxelMaterials;
+	TArray<APagedChunk*> chunks = Prefetch(Region);
+	for (int i = 0; i < chunks.Num(); i++)
+	{
+		// Queue the chunks; Tick will handle the actual chunk loading
+		ChunksToCreateMesh.Enqueue(chunks[i]);
+	}
 }
 
 uint8 APagedVolume::GetSideLengthPower() const
@@ -215,9 +325,9 @@ bool APagedVolume::CanReuseLastAccessedChunk(int32 ChunkX, int32 ChunkY, int32 C
 			(LastAccessedChunk != NULL));
 }
 
-UPagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
+APagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 {
-	UPagedChunk* chunk = nullptr;
+	APagedChunk* chunk = nullptr;
 
 	// Extract the lower five bits from each position component.
 	const uint32 chunkXLowerBits = static_cast<uint32>(ChunkX & 0x1F);
@@ -254,7 +364,7 @@ UPagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 	{
 		// The chunk was not found so we will create a new one.
 		FVector chunkPos(ChunkX, ChunkY, ChunkZ);
-		chunk = NewObject<UPagedChunk>();
+		chunk = GetWorld()->SpawnActor<APagedChunk>();
 		chunk->InitChunk(chunkPos,ChunkSideLength,Pager);
 		Timestamper++;
 		chunk->ChunkLastAccessed = Timestamper; // Important, as we may soon delete the oldest chunk
@@ -306,10 +416,11 @@ UPagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 		}
 
 		// Check if we have too many chunks, and delete the oldest if so.
-		if (chunkCount > ChunkCountLimit)
+		/*if (chunkCount > ChunkCountLimit)
 		{
+			ArrayChunks[oldestChunkIndex]->Destroy();
 			ArrayChunks[oldestChunkIndex] = NULL;
-		}
+		}*/
 	}
 
 	LastAccessedChunk = chunk;

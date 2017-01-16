@@ -28,12 +28,12 @@ SOFTWARE.
 
 
 
-void UPager::PageIn_Implementation(const FRegion& Region, UPagedChunk* Chunk)
+void UPager::PageIn_Implementation(const FRegion& Region, APagedChunk* Chunk)
 {
 	// Empty
 }
 
-void UPager::PageOut_Implementation(const FRegion& Region, UPagedChunk* Chunk)
+void UPager::PageOut_Implementation(const FRegion& Region, APagedChunk* Chunk)
 {
 	// Empty
 }

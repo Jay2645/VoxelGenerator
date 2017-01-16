@@ -57,6 +57,12 @@ void ABaseVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)
 	unimplemented();
 }
 
+bool ABaseVolume::RegionIsEmpty(const FRegion& Region)
+{
+	unimplemented();
+	return true;
+}
+
 int32 ABaseVolume::CalculateSizeInBytes() const
 {
 	unimplemented();

@@ -50,6 +50,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 	virtual void SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel);
 
+
+	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
+	virtual bool RegionIsEmpty(const FRegion& Region);
+
 	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
 	virtual int32 CalculateSizeInBytes() const;
 

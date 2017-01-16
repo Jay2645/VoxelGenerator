@@ -26,6 +26,7 @@ SOFTWARE.
 #include "PolyVoxPrivatePCH.h"
 #include "Utils/Morton.h"
 #include "Paging/PagedVolume.h"
+#include "Paging/PagedChunk.h"
 #include <array>
 #include "VolumeSampler.h"
 
@@ -48,9 +49,25 @@ static const std::array<int32, 256> deltaY = { 2, 14, 2, 110, 2, 14, 2, 878, 2, 
 static const std::array<int32, 256> deltaZ = { 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 898780, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 7190236, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 898780, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4 };
 
 
-void UVolumeSampler::Initalize(ABaseVolume* VolumeData)
+UVolumeSampler::UVolumeSampler(APagedVolume* VolumeData)
 {
 	Volume = VolumeData;
+}
+
+UVolumeSampler::UVolumeSampler(const UVolumeSampler& Sampler)
+{
+	Volume = Sampler.Volume;
+
+	XPosInVolume = Sampler.XPosInVolume;
+	YPosInVolume = Sampler.YPosInVolume;
+	ZPosInVolume = Sampler.ZPosInVolume;
+
+	XPosInChunk = Sampler.XPosInChunk;
+	YPosInChunk = Sampler.YPosInChunk;
+	ZPosInChunk = Sampler.ZPosInChunk;
+
+	CurrentVoxelIndex = Sampler.CurrentVoxelIndex;
+	CurrentChunk = Sampler.CurrentChunk;
 }
 
 UVoxel* UVolumeSampler::GetVoxel()
@@ -79,6 +96,11 @@ UVoxel* UVolumeSampler::GetVoxel()
 
 void UVolumeSampler::SetPosition(int32 XPos, int32 YPos, int32 ZPos)
 {
+	if (Volume == NULL)
+	{
+		UE_LOG(LogPolyVox, Fatal, TEXT("Sampler volume was null!"));
+		return;
+	}
 	XPosInVolume = XPos;
 	YPosInVolume = YPos;
 	ZPosInVolume = ZPos;
@@ -97,7 +119,7 @@ void UVolumeSampler::SetPosition(int32 XPos, int32 YPos, int32 ZPos)
 
 		uint32 voxelIndexInChunk = morton256_x[XPosInChunk] | morton256_y[YPosInChunk] | morton256_z[ZPosInChunk];
 
-		CurrentChunk = ((APagedVolume*)Volume)->CanReuseLastAccessedChunk(xChunk, yChunk, zChunk) ? ((APagedVolume*)Volume)->LastAccessedChunk : ((APagedVolume*)Volume)->GetChunk(xChunk, yChunk, zChunk);
+		CurrentChunk = Volume->CanReuseLastAccessedChunk(xChunk, yChunk, zChunk) ? Volume->LastAccessedChunk : Volume->GetChunk(xChunk, yChunk, zChunk);
 
 		CurrentVoxelIndex = voxelIndexInChunk;
 	}

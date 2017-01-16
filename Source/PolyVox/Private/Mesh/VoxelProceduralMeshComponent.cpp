@@ -32,6 +32,10 @@ SOFTWARE.
 
 void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(ABaseVolume* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials)
 {
+	/*if (VolumeData->RegionIsEmpty(Region))
+	{
+		return;
+	}*/
 	auto rawMesh = GetEncodedMesh(VolumeData, Region, UMarchingCubesDefaultController::StaticClass());
 	TArray<FVoxelMeshSection> meshSections = GenerateTriangles(rawMesh);
 	if (meshSections.Num() > VoxelMaterials.Num())
@@ -41,7 +45,6 @@ void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(ABaseVolume* VolumeD
 	}
 	else if (meshSections.Num() == 0)
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("No meshes defined when sending volume to procedural mesh!"));
 		return;
 	}
 	for (int i = 0; i < meshSections.Num(); i++)
@@ -149,12 +152,10 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 
 	UMarchingCubesDefaultController* controller = NewObject<UMarchingCubesDefaultController>((UObject*)GetTransientPackage(),Controller);
 
-	// Store some commonly used values for performance and convienience
+	// Store some commonly used values for performance and convenience
 	const uint32 uRegionWidthInVoxels = (uint32)URegionHelper::GetWidthInVoxels(Region);
 	const uint32 uRegionHeightInVoxels = (uint32)URegionHelper::GetHeightInVoxels(Region);
 	const uint32 uRegionDepthInVoxels = (uint32)URegionHelper::GetDepthInVoxels(Region);
-
-	auto Threshold = controller->GetThreshold();
 
 	// A naive implementation of Marching Cubes might sample the eight corner voxels of every cell to determine the cell index. 
 	// However, when processing the cells sequentially we can observe that many of the voxels are shared with previous adjacent 
@@ -175,20 +176,19 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 
 	// A sampler pointing at the beginning of the region, which gets incremented to always point at the beginning of a slice.
 
-	UVolumeSampler* startOfSlice = NewObject<UVolumeSampler>();
-	startOfSlice->Initalize(Volume);
-	startOfSlice->SetPosition(URegionHelper::GetLowerX(Region), URegionHelper::GetLowerY(Region), URegionHelper::GetLowerZ(Region));
+	UVolumeSampler startOfSlice((APagedVolume*)Volume);
+	startOfSlice.SetPosition(URegionHelper::GetLowerX(Region), URegionHelper::GetLowerY(Region), URegionHelper::GetLowerZ(Region));
 
 	for (uint32 uZRegSpace = 0; uZRegSpace < uRegionDepthInVoxels; uZRegSpace++)
 	{
 		// A sampler pointing at the beginning of the slice, which gets incremented to always point at the beginning of a row.
-		UVolumeSampler* startOfRow = NewObject<UVolumeSampler>((UObject*)GetTransientPackage(), NAME_None, RF_NoFlags, startOfSlice);
+		UVolumeSampler startOfRow(startOfSlice);
 
 		for (uint32 uYRegSpace = 0; uYRegSpace < uRegionHeightInVoxels; uYRegSpace++)
 		{
 			// Copying a sampler which is already pointing at the correct location seems (slightly) faster than
 			// calling setPosition(). Therefore we make use of 'startOfRow' and 'startOfSlice' to reset the sampler.
-			UVolumeSampler* sampler = NewObject<UVolumeSampler>((UObject*)GetTransientPackage(), NAME_None, RF_NoFlags, startOfRow);
+			UVolumeSampler sampler(startOfRow);
 
 			for (uint32 uXRegSpace = 0; uXRegSpace < uRegionWidthInVoxels; uXRegSpace++)
 			{
@@ -227,8 +227,8 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 
 				// The last bit of our cube index is obtained by looking
 				// at the relevant voxel and comparing it to the threshold
-				UVoxel* v111 = sampler->GetVoxel();
-				if (controller->ConvertToDensity(v111) < Threshold) uCellIndex |= 128;
+				UVoxel* v111 = sampler.GetVoxel();
+				if (v111->bIsSolid) uCellIndex |= 128;
 
 				// The current value becomes the previous value, ready for the next iteration.
 				uPreviousCellIndex = uCellIndex;
@@ -255,7 +255,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 				// calls). For now we will leave it as-is, until we have more information from real-world profiling.
 				if (uEdge != 0)
 				{
-					auto v111Density = controller->ConvertToDensity(v111);
+					uint8 v111Density = v111->bIsSolid ? 255 : 0;
 
 					// Performance note: Computing normals is one of the bottlencks in the mesh generation process. The
 					// central difference approach actually samples the same voxel more than once as we call it on two
@@ -267,10 +267,10 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 					/* Find the vertices where the surface intersects the cube */
 					if ((uEdge & 64) && (uXRegSpace > 0))
 					{
-						sampler->MoveNegativeX();
-						UVoxel* v011 = sampler->GetVoxel();
-						auto v011Density = controller->ConvertToDensity(v011);
-						const float fInterp = static_cast<float>(Threshold - v011Density) / static_cast<float>(v111Density - v011Density);
+						sampler.MoveNegativeX();
+						UVoxel* v011 = sampler.GetVoxel();
+						uint8 v011Density = v011->bIsSolid ? 255 : 0;
+						const float fInterp = static_cast<float>(128 - v011Density) / static_cast<float>(v111Density - v011Density);
 
 						// Compute the position
 						const FVector v3dPosition(static_cast<float>(uXRegSpace - 1) + fInterp, static_cast<float>(uYRegSpace), static_cast<float>(uZRegSpace));
@@ -301,14 +301,14 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						pIndex.X = uLastVertexIndex;
 						pIndices = UArrayHelper::Set2DFVector(pIndices, pIndex, uXRegSpace, uYRegSpace, uRegionWidthInVoxels);
 
-						sampler->MovePositiveX();
+						sampler.MovePositiveX();
 					}
 					if ((uEdge & 32) && (uYRegSpace > 0))
 					{
-						sampler->MoveNegativeY();
-						UVoxel* v101 = sampler->GetVoxel();
-						auto v101Density = controller->ConvertToDensity(v101);
-						const float fInterp = static_cast<float>(Threshold - v101Density) / static_cast<float>(v111Density - v101Density);
+						sampler.MoveNegativeY();
+						UVoxel* v101 = sampler.GetVoxel();
+						auto v101Density = v101->bIsSolid ? 255 : 0;
+						const float fInterp = static_cast<float>(128 - v101Density) / static_cast<float>(v111Density - v101Density);
 
 						// Compute the position
 						const FVector v3dPosition(static_cast<float>(uXRegSpace), static_cast<float>(uYRegSpace - 1) + fInterp, static_cast<float>(uZRegSpace));
@@ -339,14 +339,14 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						pIndex.Y = uLastVertexIndex;
 						pIndices = UArrayHelper::Set2DFVector(pIndices, pIndex, uXRegSpace, uYRegSpace, uRegionWidthInVoxels);
 
-						sampler->MovePositiveY();
+						sampler.MovePositiveY();
 					}
 					if ((uEdge & 1024) && (uZRegSpace > 0))
 					{
-						sampler->MoveNegativeZ();
-						UVoxel* v110 = sampler->GetVoxel();
-						auto v110Density = controller->ConvertToDensity(v110);
-						const float fInterp = static_cast<float>(Threshold - v110Density) / static_cast<float>(v111Density - v110Density);
+						sampler.MoveNegativeZ();
+						UVoxel* v110 = sampler.GetVoxel();
+						auto v110Density = v110->bIsSolid ? 255 : 0;
+						const float fInterp = static_cast<float>(128 - v110Density) / static_cast<float>(v111Density - v110Density);
 
 						// Compute the position
 						const FVector v3dPosition(static_cast<float>(uXRegSpace), static_cast<float>(uYRegSpace), static_cast<float>(uZRegSpace - 1) + fInterp);
@@ -377,7 +377,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						pIndex.Z = uLastVertexIndex;
 						pIndices = UArrayHelper::Set2DFVector(pIndices, pIndex, uXRegSpace, uYRegSpace, uRegionWidthInVoxels);
 
-						sampler->MovePositiveZ();
+						sampler.MovePositiveZ();
 					}
 
 					// Now output the indices. For the first row, column or slice there aren't
@@ -450,11 +450,11 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						} // For each triangle
 					}
 				} // For each cell
-				sampler->MovePositiveX();
+				sampler.MovePositiveX();
 			} // For X
-			startOfRow->MovePositiveY();
+			startOfRow.MovePositiveY();
 		} // For Y
-		startOfSlice->MovePositiveZ();
+		startOfSlice.MovePositiveZ();
 
 		TArray<FVector> tem = pIndices;
 		pIndices = pPreviousIndices;
@@ -501,7 +501,6 @@ TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const
 	// Sanity check
 	if (decodedMesh.Indices.Num() < 3)
 	{
-		UE_LOG(LogPolyVox, Error, TEXT("Not enough vertices to create any procedural meshes!"));
 		return meshSections;
 	}
 

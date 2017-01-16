@@ -28,19 +28,25 @@ SOFTWARE.
 #include "UObject/NoExportTypes.h"
 #include "RegionHelper.h"
 #include "Pager.h"
+#include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedChunk.generated.h"
 
 /**
  * 
  */
 UCLASS(BlueprintType)
-class POLYVOX_API UPagedChunk : public UObject
+class POLYVOX_API APagedChunk : public AActor
 {
 	friend class APagedVolume;
-
 	GENERATED_BODY()
 public:
-	~UPagedChunk();
+	APagedChunk();
+	~APagedChunk();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
+	UVoxelProceduralMeshComponent* VoxelMesh;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Voxels")
+	FRegion ChunkRegion;
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
 	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr);
@@ -62,6 +68,9 @@ public:
 	void SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
 	void SetVoxelFromVector(const FVector& Pos, UVoxel* Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
+	void CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials);
 private:
 	static int32 CalculateSizeInBytes(uint8 ChunkSideLength);
 
@@ -73,6 +82,8 @@ private:
 	// a compressed chunk has to be paged back to disk, or whether they can just be discarded.
 	UPROPERTY()
 	bool bDataModified;
+	UPROPERTY()
+	bool bNeedsNewMarchingCubesMesh;
 
 	UPROPERTY()
 	TArray<UVoxel*> VoxelData;

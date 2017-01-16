@@ -25,21 +25,20 @@ SOFTWARE.
 
 #pragma once
 
-#include "UObject/NoExportTypes.h"
 #include "RegionHelper.h"
-#include "Paging/PagedChunk.h"
-#include "BaseVolume.h"
-#include "VolumeSampler.generated.h"
+
+class APagedVolume;
+class APagedChunk;
 
 /**
  * 
  */
-UCLASS(BlueprintType)
-class POLYVOX_API UVolumeSampler : public UObject
+class UVolumeSampler
 {
-	GENERATED_BODY()
 public:
-	void Initalize(ABaseVolume* VolumeData);
+	UVolumeSampler(APagedVolume* VolumeData);
+	UVolumeSampler(const UVolumeSampler& Sampler);
+
 	UVoxel* GetVoxel();
 	void SetPosition(int32 XPos, int32 YPos, int32 ZPos);
 	void MoveNegativeX();
@@ -50,27 +49,18 @@ public:
 	void MovePositiveZ();
 
 private:
-	UPROPERTY()
-	ABaseVolume* Volume;
+	APagedVolume* Volume;
 
 	//The current position in the volume
-	UPROPERTY()
 	int32 XPosInVolume;
-	UPROPERTY()
 	int32 YPosInVolume;
-	UPROPERTY()
 	int32 ZPosInVolume;
 
-	UPROPERTY()
 	int32 CurrentVoxelIndex;
-	UPROPERTY()
-	UPagedChunk* CurrentChunk;
+	APagedChunk* CurrentChunk;
 
-	UPROPERTY()
 	int32 XPosInChunk;
-	UPROPERTY()
 	int32 YPosInChunk;
-	UPROPERTY()
 	int32 ZPosInChunk;
 
 	uint16 ChunkSideLengthMinusOne;
