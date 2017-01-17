@@ -176,6 +176,8 @@ void APagedVolume::PageInChunksAroundPlayer(AController* PlayerController, const
 
 	APawn* playerPawn = PlayerController->GetPawn();
 	FVector regionCenter = playerPawn->GetActorLocation();
+	regionCenter.X /= 100.0f;
+	regionCenter.Y /= 100.0f;
 	regionCenter.Z = 0.0f;
 	FVector regionExtents = FVector(NumberOfChunksToPageIn * ChunkSideLength, NumberOfChunksToPageIn * ChunkSideLength, MaxWorldHeight);
 	FRegion pageInRegion = URegionHelper::CreateRegionFromVector(regionCenter - regionExtents, regionCenter + regionExtents);
@@ -213,6 +215,8 @@ TArray<APagedChunk*> APagedVolume::Prefetch(FRegion PrefetchRegion)
 		UE_LOG(LogPolyVox, Warning, TEXT("Attempting to prefetch more than the maximum number of chunks (this will cause thrashing)."));
 	}
 	noOfChunks = FMath::Min(noOfChunks, ChunkCountLimit);
+
+	UE_LOG(LogPolyVox, Log, TEXT("Fetching chunks from (%f, %f, %f) to (%f, %f, %f)."), start.X, start.Y, start.Z, end.X, end.Y, end.Z);
 
 	// Loops over the specified positions and touch the corresponding chunks.
 	TArray<APagedChunk*> touchedChunks;
@@ -315,6 +319,7 @@ bool APagedVolume::CanReuseLastAccessedChunk(int32 ChunkX, int32 ChunkY, int32 C
 
 APagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 {
+	UE_LOG(LogPolyVox, Log, TEXT("Fetching chunk at %d, %d, %d."), ChunkX, ChunkY, ChunkZ);
 	APagedChunk* chunk = nullptr;
 
 	// Extract the lower five bits from each position component.

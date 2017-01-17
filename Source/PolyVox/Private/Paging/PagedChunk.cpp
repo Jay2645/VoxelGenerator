@@ -85,8 +85,22 @@ void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	FVector v3dLower = ChunkSpacePosition * (int32)(SideLength);
 	FVector v3dUpper = v3dLower + FVector(SideLength, SideLength, SideLength);
 	ChunkRegion = URegionHelper::CreateRegionFromVector(v3dLower, v3dUpper);
-	//FString chunkName = TEXT("Chunk ("+ChunkRegion.LowerX+", "+ChunkRegion.LowerY+", "+ChunkRegion.LowerZ+") - ("+ChunkRegion.UpperX+", "+ChunkRegion.UpperY+", "+ChunkRegion.UpperZ+")";
-	//Rename(TEXT(chunkName));
+
+	FString chunkName = FString("Chunk (");
+	chunkName += FString::FromInt((int32)v3dLower.X);
+	chunkName += FString(", ");
+	chunkName += FString::FromInt((int32)v3dLower.Y);
+	chunkName += FString(", ");
+	chunkName += FString::FromInt((int32)v3dLower.Z);
+	chunkName += FString(") - (");
+	chunkName += FString::FromInt((int32)v3dUpper.X);
+	chunkName += FString(", ");
+	chunkName += FString::FromInt((int32)v3dUpper.Y);
+	chunkName += FString(", ");
+	chunkName += FString::FromInt((int32)v3dUpper.Z);
+	chunkName += FString(")");
+	Rename(*chunkName);
+	SetActorLabel(chunkName);
 	// Page the data in
 	Pager->PageIn(ChunkRegion, this);
 
