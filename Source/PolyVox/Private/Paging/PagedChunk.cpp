@@ -106,16 +106,26 @@ int32 APagedChunk::GetDataSizeInBytes() const
 	return CalculateSizeInBytes(SideLength);
 }
 
-UVoxel* APagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
+UVoxel* APagedChunk::GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos)
+{
+	checkf(XPos >= ChunkRegion.LowerX, TEXT("Wrong chunk! Supplied x position %d is outside of the chunk boundaries %d"), XPos, ChunkRegion.LowerX);
+	checkf(YPos >= ChunkRegion.LowerY, TEXT("Wrong chunk! Supplied y position %d is outside of the chunk boundaries %d"), YPos, ChunkRegion.LowerY);
+	checkf(ZPos >= ChunkRegion.LowerZ, TEXT("Wrong chunk! Supplied z position %d is outside of the chunk boundaries %d"), ZPos, ChunkRegion.LowerZ);
+	return GetVoxelByCoordinatesChunkSpace(XPos - ChunkRegion.LowerX, YPos - ChunkRegion.LowerY, ZPos - ChunkRegion.LowerZ);
+}
+
+UVoxel* APagedChunk::GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
-	checkf(XPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), XPos, SideLength);
-	checkf(YPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), YPos, SideLength);
-	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
+	checkf(XPos < SideLength, TEXT("Supplied x position %d is outside of the chunk boundaries %d"), XPos, SideLength);
+	checkf(YPos < SideLength, TEXT("Supplied y position %d is outside of the chunk boundaries %d"), YPos, SideLength);
+	checkf(ZPos < SideLength, TEXT("Supplied z position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+
+	checkf(index < (uint32)VoxelData.Num(), TEXT("Morton index %d out of bounds of voxel data size %d! Trying to access (%d, %d, %d)."), index, VoxelData.Num(), XPos, YPos, ZPos);
 
 	if (VoxelData[index] == NULL)
 	{
@@ -124,31 +134,31 @@ UVoxel* APagedChunk::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 	return VoxelData[index];
 }
 
-UVoxel* APagedChunk::GetVoxelByVector(const FVector& Pos)
+void APagedChunk::SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
 {
-	return GetVoxelByCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z);
+	checkf(XPos >= ChunkRegion.LowerX, TEXT("Wrong chunk! Supplied x position %d is outside of the chunk boundaries %d"), XPos, ChunkRegion.LowerX);
+	checkf(YPos >= ChunkRegion.LowerY, TEXT("Wrong chunk! Supplied y position %d is outside of the chunk boundaries %d"), YPos, ChunkRegion.LowerY);
+	checkf(ZPos >= ChunkRegion.LowerZ, TEXT("Wrong chunk! Supplied z position %d is outside of the chunk boundaries %d"), ZPos, ChunkRegion.LowerZ);
+	SetVoxelByCoordinatesChunkSpace(XPos - ChunkRegion.LowerX, YPos - ChunkRegion.LowerY, ZPos - ChunkRegion.LowerZ, Value);
 }
 
-void APagedChunk::SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
+void APagedChunk::SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
-	checkf(XPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), XPos, SideLength);
-	checkf(YPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), YPos, SideLength);
-	checkf(ZPos < SideLength, TEXT("Supplied position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
+	checkf(XPos < SideLength, TEXT("Supplied x position %d is outside of the chunk boundaries %d"), XPos, SideLength);
+	checkf(YPos < SideLength, TEXT("Supplied y position %d is outside of the chunk boundaries %d"), YPos, SideLength);
+	checkf(ZPos < SideLength, TEXT("Supplied z position %d is outside of the chunk boundaries %d"), ZPos, SideLength);
 	checkf(VoxelData.Num() > 0, TEXT("No uncompressed data - chunk must be decompressed before accessing voxels."));
 
-	uint32_t index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+	uint32 index = morton256_x[XPos] | morton256_y[YPos] | morton256_z[ZPos];
+
+	checkf(index < (uint32)VoxelData.Num(), TEXT("Morton index %d out of bounds of voxel data size %d! Trying to access (%d, %d, %d)."), index, VoxelData.Num(), XPos, YPos, ZPos);
 
 	VoxelData[index] = Value;
 
 	bDataModified = true;
 	bNeedsNewMarchingCubesMesh = true;
-}
-
-void APagedChunk::SetVoxelFromVector(const FVector& Pos, UVoxel* Value)
-{
-	SetVoxelFromCoordinates((int32)Pos.X, (int32)Pos.Y, (int32)Pos.Z, Value);
 }
 
 void APagedChunk::CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials)
@@ -159,6 +169,20 @@ void APagedChunk::CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMate
 		VoxelMesh->CreateMarchingCubesMesh(Volume, ChunkRegion, VoxelMaterials);
 	}
 	bNeedsNewMarchingCubesMesh = false;
+}
+
+UVoxel* APagedChunk::GetDataAtIndex(const int32 CurrentVoxelIndex) const
+{
+	if (CurrentVoxelIndex < 0 || CurrentVoxelIndex >= VoxelData.Num())
+	{
+		UE_LOG(LogPolyVox, Warning, TEXT("Current voxel index %d was out of range!"), CurrentVoxelIndex);
+		return UVoxel::GetEmptyVoxel();
+	}
+	if (VoxelData[CurrentVoxelIndex] == NULL)
+	{
+		return UVoxel::GetEmptyVoxel();
+	}
+	return VoxelData[CurrentVoxelIndex];
 }
 
 int32 APagedChunk::CalculateSizeInBytes(uint8 ChunkSideLength)

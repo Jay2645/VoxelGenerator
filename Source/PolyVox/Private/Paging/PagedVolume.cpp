@@ -139,7 +139,7 @@ UVoxel* APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 
 	auto pChunk = CanReuseLastAccessedChunk(chunkX, chunkY, chunkZ) ? LastAccessedChunk : GetChunk(chunkX, chunkY, chunkZ);
 
-	return pChunk->GetVoxelByCoordinates(xOffset, yOffset, zOffset);
+	return pChunk->GetVoxelByCoordinatesChunkSpace(xOffset, yOffset, zOffset);
 }
 
 UVoxel* APagedVolume::GetVoxelByVector(const FVector& Coordinates)
@@ -159,7 +159,7 @@ void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVo
 
 	auto pChunk = CanReuseLastAccessedChunk(chunkX, chunkY, chunkZ) ? LastAccessedChunk : GetChunk(chunkX, chunkY, chunkZ);
 
-	pChunk->SetVoxelFromCoordinates(xOffset, yOffset, zOffset, Voxel);
+	pChunk->SetVoxelByCoordinatesChunkSpace(xOffset, yOffset, zOffset, Voxel);
 }
 
 void APagedVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)

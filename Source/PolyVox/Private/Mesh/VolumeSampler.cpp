@@ -52,11 +52,13 @@ static const std::array<int32, 256> deltaZ = { 4, 28, 4, 220, 4, 28, 4, 1756, 4,
 UVolumeSampler::UVolumeSampler(APagedVolume* VolumeData)
 {
 	Volume = VolumeData;
+	ChunkSideLengthMinusOne = Volume->ChunkSideLength - 1;
 }
 
 UVolumeSampler::UVolumeSampler(const UVolumeSampler& Sampler)
 {
 	Volume = Sampler.Volume;
+	ChunkSideLengthMinusOne = Volume->ChunkSideLength - 1;
 
 	XPosInVolume = Sampler.XPosInVolume;
 	YPosInVolume = Sampler.YPosInVolume;
@@ -72,7 +74,6 @@ UVolumeSampler::UVolumeSampler(const UVolumeSampler& Sampler)
 
 UVoxel* UVolumeSampler::GetVoxel()
 {
-	uint8 sideLengthPower = Volume->GetSideLengthPower();
 	if (CurrentChunk == NULL)
 	{
 		UE_LOG(LogPolyVox, Log, TEXT("Current chunk was null. Getting by coordinates."));
@@ -80,17 +81,7 @@ UVoxel* UVolumeSampler::GetVoxel()
 	}
 	else
 	{
-		TArray<UVoxel*> data = CurrentChunk->GetData();
-		if (CurrentVoxelIndex < 0 || CurrentVoxelIndex >= data.Num())
-		{
-			UE_LOG(LogPolyVox, Warning, TEXT("Current voxel index %d was out of range!"), CurrentVoxelIndex);
-			return UVoxel::GetEmptyVoxel();
-		}
-		if (data[CurrentVoxelIndex] == NULL)
-		{
-			return UVoxel::GetEmptyVoxel();
-		}
-		return data[CurrentVoxelIndex];
+		return CurrentChunk->GetDataAtIndex(CurrentVoxelIndex);
 	}
 }
 
@@ -113,9 +104,9 @@ void UVolumeSampler::SetPosition(int32 XPos, int32 YPos, int32 ZPos)
 		const int32 yChunk = YPosInVolume >> sideLengthPower;
 		const int32 zChunk = ZPosInVolume >> sideLengthPower;
 
-		XPosInChunk = (XPosInVolume - (xChunk << Volume->GetSideLengthPower()));
-		YPosInChunk = (YPosInVolume - (yChunk << Volume->GetSideLengthPower()));
-		ZPosInChunk = (ZPosInVolume - (zChunk << Volume->GetSideLengthPower()));
+		XPosInChunk = (XPosInVolume - (xChunk << sideLengthPower));
+		YPosInChunk = (YPosInVolume - (yChunk << sideLengthPower));
+		ZPosInChunk = (ZPosInVolume - (zChunk << sideLengthPower));
 
 		uint32 voxelIndexInChunk = morton256_x[XPosInChunk] | morton256_y[YPosInChunk] | morton256_z[ZPosInChunk];
 

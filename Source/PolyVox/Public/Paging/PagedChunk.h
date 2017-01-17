@@ -60,17 +60,20 @@ public:
 	int32 GetDataSizeInBytes() const;
 
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
+	UVoxel* GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos);
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	UVoxel* GetVoxelByVector(const FVector& Pos);
+	UVoxel* GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos);
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelFromCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
+	void SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelFromVector(const FVector& Pos, UVoxel* Value);
+	void SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
 	void CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials);
+	
+	UVoxel* GetDataAtIndex(const int32 CurrentVoxelIndex) const;
+
 private:
 	static int32 CalculateSizeInBytes(uint8 ChunkSideLength);
 
