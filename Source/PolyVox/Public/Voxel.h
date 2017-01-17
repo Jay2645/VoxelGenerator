@@ -30,8 +30,8 @@ SOFTWARE.
 /**
  * 
  */
-UCLASS(BlueprintType)
-class POLYVOX_API UVoxel : public UDataAsset
+USTRUCT(BlueprintType)
+struct POLYVOX_API FVoxel
 {
 	GENERATED_BODY()
 public:	
@@ -43,11 +43,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
 	bool bIsSolid;
 
-	UVoxel();
+	FVoxel::FVoxel()
+	{
+		Material = 0;
+		bIsSolid = false;
+	}
 
-	UFUNCTION(BlueprintPure, Category = "Voxel")
-	static UVoxel* GetEmptyVoxel();
+	static FVoxel GetEmptyVoxel();
 
-	UFUNCTION(BlueprintPure, Category = "Voxel")
-	static UVoxel* MakeVoxel(uint8 MaterialID, bool bShouldBeSolid);
+	static FVoxel MakeVoxel(uint8 MaterialID, bool bShouldBeSolid);
 };

@@ -41,14 +41,14 @@ public:
 	ABaseVolume();
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
+	virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual UVoxel* GetVoxelByVector(const FVector& Coordinates);
+	virtual FVoxel GetVoxelByVector(const FVector& Coordinates);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Voxel);
+	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Voxel);
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel);
+	virtual void SetVoxelByVector(const FVector& Coordinates, FVoxel Voxel);
 
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
@@ -63,13 +63,13 @@ public:
 	// Any Voxels above this height are turned to air.
 	// Voxels below this height are brought up to be of the specified height, using a given Voxel as a "filler".
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	void FlattenRegionToHeight(const FRegion& Region, const int32 Height, UVoxel* Filler);
+	void FlattenRegionToHeight(const FRegion& Region, const int32 Height, FVoxel Filler);
 
 	// This changes a region to reflect a given heightmap.
 	// This heightmap should be a 2D array, with dimensions the same as the width (x) and height (y) of the region being passed into it.
 	// The Voxel passed into this function is used for any solid voxels in the heightmap.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	void SetRegionHeightmap(const FRegion& Region, const TArray<float>& Heights, UVoxel* Filler);
+	void SetRegionHeightmap(const FRegion& Region, const TArray<float>& Heights, FVoxel Filler);
 
 	// This changes a region to reflect a given heightmap.
 	// This heightmap should be a 2D array, with dimensions the same as the width (x) and height (y) of the region being passed into it.
@@ -78,7 +78,7 @@ public:
 	void SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<uint8>& Materials);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	void SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, UVoxel* Filler);
+	void SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, FVoxel Filler);
 
 	// This goes through an entire region and maps any solid voxels to the material ID for that point in the Materials array.
 	// This heightmap should be a 2D array, with dimensions the same as the width (x) and height (y) of the region being passed into it.

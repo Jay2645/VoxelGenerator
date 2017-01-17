@@ -47,6 +47,8 @@ public:
 	UVoxelProceduralMeshComponent* VoxelMesh;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Voxels")
 	FRegion ChunkRegion;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Voxels")
+	bool bDueToBePagedOut;
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
 	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr);
@@ -55,31 +57,27 @@ public:
 	void RemoveChunk();
 
 	UFUNCTION(BlueprintPure, Category="Chunk|Voxels")
-	TArray<UVoxel*> GetData() const;
+	TArray<FVoxel> GetData() const;
 	UFUNCTION(BlueprintPure, Category = "Chunk|Size")
 	int32 GetDataSizeInBytes() const;
 
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	UVoxel* GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos);
+	FVoxel GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos);
 	UFUNCTION(BlueprintPure, Category = "Chunk|Voxels")
-	UVoxel* GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos);
+	FVoxel GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos);
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
+	void SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value);
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value);
+	void SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
 	void CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials);
 	
-	UVoxel* GetDataAtIndex(const int32 CurrentVoxelIndex) const;
+	FVoxel GetDataAtIndex(const int32 CurrentVoxelIndex) const;
 
 private:
 	static int32 CalculateSizeInBytes(uint8 ChunkSideLength);
-
-	// This is updated by the PagedVolume and used to discard the least recently used chunks.
-	UPROPERTY()
-	int32 ChunkLastAccessed;
 
 	// This is so we can tell whether a uncompressed chunk has to be recompressed and whether
 	// a compressed chunk has to be paged back to disk, or whether they can just be discarded.
@@ -89,7 +87,7 @@ private:
 	bool bNeedsNewMarchingCubesMesh;
 
 	UPROPERTY()
-	TArray<UVoxel*> VoxelData;
+	TArray<FVoxel> VoxelData;
 	UPROPERTY()
 	uint8 SideLength;
 	UPROPERTY()

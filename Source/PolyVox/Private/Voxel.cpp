@@ -25,21 +25,15 @@ SOFTWARE.
 #include "PolyVoxPrivatePCH.h"
 #include "Voxel.h"
 
-UVoxel::UVoxel()
-{
-	Material = 0;
-	bIsSolid = false;
-}
-
-UVoxel* UVoxel::GetEmptyVoxel()
+FVoxel FVoxel::GetEmptyVoxel()
 {
 	return MakeVoxel(0, false);
 }
 
-UVoxel* UVoxel::MakeVoxel(uint8 MaterialID, bool bShouldBeSolid)
+FVoxel FVoxel::MakeVoxel(uint8 MaterialID, bool bShouldBeSolid)
 {
-	UVoxel* voxel = NewObject<UVoxel>();
-	voxel->Material = MaterialID;
-	voxel->bIsSolid = bShouldBeSolid;
+	FVoxel voxel;
+	voxel.Material = MaterialID;
+	voxel.bIsSolid = bShouldBeSolid;
 	return voxel;
 }

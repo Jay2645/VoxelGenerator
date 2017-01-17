@@ -15,7 +15,7 @@ void UFlatPager::PageIn_Implementation(const FRegion& Region, APagedChunk* Chunk
 				{
 					break;
 				}
-				UVoxel* voxel = UVoxel::MakeVoxel(VoxelMaterial, true);
+				FVoxel voxel = FVoxel::MakeVoxel(VoxelMaterial, true);
 				Chunk->SetVoxelByCoordinatesWorldSpace(x, y, z, voxel);
 			}
 		}

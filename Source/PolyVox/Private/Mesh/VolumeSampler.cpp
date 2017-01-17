@@ -72,7 +72,7 @@ UVolumeSampler::UVolumeSampler(const UVolumeSampler& Sampler)
 	CurrentChunk = Sampler.CurrentChunk;
 }
 
-UVoxel* UVolumeSampler::GetVoxel()
+FVoxel UVolumeSampler::GetVoxel()
 {
 	if (CurrentChunk == NULL)
 	{

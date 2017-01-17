@@ -54,14 +54,14 @@ public:
 	uint8 ChunkSideLength;
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual UVoxel* GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
+	virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual UVoxel* GetVoxelByVector(const FVector& Coordinates) override;
+	virtual FVoxel GetVoxelByVector(const FVector& Coordinates) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Voxel) override;
+	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Voxel) override;
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel) override;
+	virtual void SetVoxelByVector(const FVector& Coordinates, FVoxel Voxel) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 	virtual void PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes);
@@ -101,9 +101,6 @@ private:
 	int32 LastAccessedChunkY = 0;
 	UPROPERTY()
 	int32 LastAccessedChunkZ = 0;
-
-	UPROPERTY()
-	int32 Timestamper = 0;
 
 	UPROPERTY()
 	int32 ChunkCountLimit = 0;

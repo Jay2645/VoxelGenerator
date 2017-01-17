@@ -39,7 +39,7 @@ public:
 	UVolumeSampler(APagedVolume* VolumeData);
 	UVolumeSampler(const UVolumeSampler& Sampler);
 
-	UVoxel* GetVoxel();
+	FVoxel GetVoxel();
 	void SetPosition(int32 XPos, int32 YPos, int32 ZPos);
 	void MoveNegativeX();
 	void MovePositiveX();

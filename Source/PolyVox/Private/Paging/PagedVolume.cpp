@@ -127,7 +127,7 @@ void APagedVolume::InitializeVolume(TSubclassOf<UPager> PagerClass, int32 Memory
 	UE_LOG(LogPolyVox, Log, TEXT("Memory usage limit for volume now set to %d MB (%d chunks of %d KB each)."), ((ChunkCountLimit * ChunkSizeInBytes) / (1024 * 1024)), ChunkCountLimit, (ChunkSizeInBytes / 1024));
 }
 
-UVoxel* APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
+FVoxel APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 {
 	const int32 chunkX = XPos >> ChunkSideLengthPower;
 	const int32 chunkY = YPos >> ChunkSideLengthPower;
@@ -142,12 +142,12 @@ UVoxel* APagedVolume::GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos)
 	return pChunk->GetVoxelByCoordinatesChunkSpace(xOffset, yOffset, zOffset);
 }
 
-UVoxel* APagedVolume::GetVoxelByVector(const FVector& Coordinates)
+FVoxel APagedVolume::GetVoxelByVector(const FVector& Coordinates)
 {
 	return GetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z);
 }
 
-void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Voxel)
+void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Voxel)
 {
 	const int32 chunkX = XPos >> ChunkSideLengthPower;
 	const int32 chunkY = YPos >> ChunkSideLengthPower;
@@ -162,7 +162,7 @@ void APagedVolume::SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, UVo
 	pChunk->SetVoxelByCoordinatesChunkSpace(xOffset, yOffset, zOffset, Voxel);
 }
 
-void APagedVolume::SetVoxelByVector(const FVector& Coordinates, UVoxel* Voxel)
+void APagedVolume::SetVoxelByVector(const FVector& Coordinates, FVoxel Voxel)
 {
 	SetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z, Voxel);
 }
@@ -225,6 +225,32 @@ TArray<APagedChunk*> APagedVolume::Prefetch(FRegion PrefetchRegion)
 				touchedChunks.Add(GetChunk(x, y, z));
 			}
 		}
+	}
+
+	// As we have added a chunk we may have exceeded our target chunk limit. Search through the array to
+	// determine how many chunks we have, as well as finding the oldest timestamp. Note that this is potentially
+	// wasteful and we may instead wish to track how many chunks we have and/or delete a chunk at random (or
+	// just check e.g. 10 and delete the oldest of those) but we'll see if this is a bottleneck first. Paging
+	// the data in is probably more expensive.
+	TArray<APagedChunk*> toPageOut;
+	uint32 chunkCount = 0;
+	for (uint32 uIndex = 0; uIndex < CHUNK_ARRAY_SIZE; uIndex++)
+	{
+		if (ArrayChunks[uIndex])
+		{
+			chunkCount++;
+			if (ArrayChunks[uIndex]->bDueToBePagedOut)
+			{
+				toPageOut.Add(ArrayChunks[uIndex]);
+			}
+		}
+	}
+
+	// Check if we have too many chunks, and delete the oldest if so.
+	while (chunkCount > (uint32)ChunkCountLimit && toPageOut.Num() > 0)
+	{
+		toPageOut[0]->Destroy();
+		toPageOut.RemoveAt(0);
 	}
 	return touchedChunks;
 }
@@ -311,8 +337,7 @@ APagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 			if (entryPos.X == ChunkX && entryPos.Y == ChunkY && entryPos.Z == ChunkZ)
 			{
 				chunk = ArrayChunks[iIndex];
-				Timestamper++;
-				chunk->ChunkLastAccessed = Timestamper;
+				chunk->bDueToBePagedOut = false;
 				break;
 			}
 		}
@@ -328,8 +353,7 @@ APagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 		FVector chunkPos(ChunkX, ChunkY, ChunkZ);
 		chunk = GetWorld()->SpawnActor<APagedChunk>();
 		chunk->InitChunk(chunkPos,ChunkSideLength,Pager);
-		Timestamper++;
-		chunk->ChunkLastAccessed = Timestamper; // Important, as we may soon delete the oldest chunk
+		chunk->bDueToBePagedOut = false;
 
 												 // Store the chunk at the appropriate place in out chunk array. Ideally this place is
 												 // given by the hash, otherwise we do a linear search for the next available location
@@ -356,33 +380,6 @@ APagedChunk* APagedVolume::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 			UE_LOG(LogPolyVox, Fatal, TEXT("No space in chunk array for new chunk."));
 			return NULL;
 		}
-		// As we have added a chunk we may have exceeded our target chunk limit. Search through the array to
-		// determine how many chunks we have, as well as finding the oldest timestamp. Note that this is potentially
-		// wasteful and we may instead wish to track how many chunks we have and/or delete a chunk at random (or
-		// just check e.g. 10 and delete the oldest of those) but we'll see if this is a bottleneck first. Paging
-		// the data in is probably more expensive.
-		int32 chunkCount = 0;
-		int32 oldestChunkIndex = 0;
-		int32 oldestChunkTimestamp = 2147483647;
-		for (uint32 uIndex = 0; uIndex < CHUNK_ARRAY_SIZE; uIndex++)
-		{
-			if (ArrayChunks[uIndex])
-			{
-				chunkCount++;
-				if (ArrayChunks[uIndex]->ChunkLastAccessed < oldestChunkTimestamp)
-				{
-					oldestChunkTimestamp = ArrayChunks[uIndex]->ChunkLastAccessed;
-					oldestChunkIndex = uIndex;
-				}
-			}
-		}
-
-		// Check if we have too many chunks, and delete the oldest if so.
-		/*if (chunkCount > ChunkCountLimit)
-		{
-			ArrayChunks[oldestChunkIndex]->Destroy();
-			ArrayChunks[oldestChunkIndex] = NULL;
-		}*/
 	}
 
 	LastAccessedChunk = chunk;

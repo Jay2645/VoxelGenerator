@@ -24,7 +24,7 @@ SOFTWARE.
 *******************************************************************************/
 #pragma once
 
-#include "UObject/NoExportTypes.h"
+#include "Voxel.h"
 #include "MarchingCubesDefaultController.generated.h"
 
 /**
@@ -36,7 +36,7 @@ class POLYVOX_API UMarchingCubesDefaultController : public UObject
 	GENERATED_BODY()
 public:
 
-	uint8 ConvertToDensity(UVoxel* Voxel);
+	uint8 ConvertToDensity(FVoxel Voxel);
 
 	/**
 	* Returns a material which is in some sense a weighted combination of the supplied materials.
@@ -46,7 +46,7 @@ public:
 	* (e.g. soil is not a combination or rock and grass). Therefore this default interpolation just returns whichever material is associated with a voxel of the
 	* higher density, but if more advanced voxel types do support interpolation then it can be implemented in this function.
 	*/
-	UVoxel* BlendMaterials(UVoxel* FirstVoxel, UVoxel* SecondVoxel, const float Interpolation);
+	FVoxel BlendMaterials(FVoxel FirstVoxel, FVoxel SecondVoxel, const float Interpolation);
 	uint8 GetThreshold();
 
 protected:

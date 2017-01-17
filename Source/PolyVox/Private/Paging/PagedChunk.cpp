@@ -69,7 +69,6 @@ void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	SideLengthPower = FMath::Log2(SideLength);
 	Pager = VoxelPager;
 	bDataModified = true;
-	ChunkLastAccessed = 0;
 	VoxelData.Empty();
 
 	if (Pager == NULL)
@@ -96,7 +95,7 @@ void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	bNeedsNewMarchingCubesMesh = true;
 }
 
-TArray<UVoxel*> APagedChunk::GetData() const
+TArray<FVoxel> APagedChunk::GetData() const
 {
 	return VoxelData;
 }
@@ -106,7 +105,7 @@ int32 APagedChunk::GetDataSizeInBytes() const
 	return CalculateSizeInBytes(SideLength);
 }
 
-UVoxel* APagedChunk::GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos)
+FVoxel APagedChunk::GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos)
 {
 	checkf(XPos >= ChunkRegion.LowerX, TEXT("Wrong chunk! Supplied x position %d is outside of the chunk boundaries %d"), XPos, ChunkRegion.LowerX);
 	checkf(YPos >= ChunkRegion.LowerY, TEXT("Wrong chunk! Supplied y position %d is outside of the chunk boundaries %d"), YPos, ChunkRegion.LowerY);
@@ -114,7 +113,7 @@ UVoxel* APagedChunk::GetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int
 	return GetVoxelByCoordinatesChunkSpace(XPos - ChunkRegion.LowerX, YPos - ChunkRegion.LowerY, ZPos - ChunkRegion.LowerZ);
 }
 
-UVoxel* APagedChunk::GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos)
+FVoxel APagedChunk::GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -127,14 +126,10 @@ UVoxel* APagedChunk::GetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int
 
 	checkf(index < (uint32)VoxelData.Num(), TEXT("Morton index %d out of bounds of voxel data size %d! Trying to access (%d, %d, %d)."), index, VoxelData.Num(), XPos, YPos, ZPos);
 
-	if (VoxelData[index] == NULL)
-	{
-		VoxelData[index] = UVoxel::GetEmptyVoxel();
-	}
 	return VoxelData[index];
 }
 
-void APagedChunk::SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
+void APagedChunk::SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value)
 {
 	checkf(XPos >= ChunkRegion.LowerX, TEXT("Wrong chunk! Supplied x position %d is outside of the chunk boundaries %d"), XPos, ChunkRegion.LowerX);
 	checkf(YPos >= ChunkRegion.LowerY, TEXT("Wrong chunk! Supplied y position %d is outside of the chunk boundaries %d"), YPos, ChunkRegion.LowerY);
@@ -142,7 +137,7 @@ void APagedChunk::SetVoxelByCoordinatesWorldSpace(int32 XPos, int32 YPos, int32 
 	SetVoxelByCoordinatesChunkSpace(XPos - ChunkRegion.LowerX, YPos - ChunkRegion.LowerY, ZPos - ChunkRegion.LowerZ, Value);
 }
 
-void APagedChunk::SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, UVoxel* Value)
+void APagedChunk::SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value)
 {
 	// This code is not usually expected to be called by the user, with the exception of when implementing paging 
 	// of uncompressed data. It's a performance critical code path so we use asserts rather than exceptions.
@@ -171,16 +166,12 @@ void APagedChunk::CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMate
 	bNeedsNewMarchingCubesMesh = false;
 }
 
-UVoxel* APagedChunk::GetDataAtIndex(const int32 CurrentVoxelIndex) const
+FVoxel APagedChunk::GetDataAtIndex(const int32 CurrentVoxelIndex) const
 {
 	if (CurrentVoxelIndex < 0 || CurrentVoxelIndex >= VoxelData.Num())
 	{
 		UE_LOG(LogPolyVox, Warning, TEXT("Current voxel index %d was out of range!"), CurrentVoxelIndex);
-		return UVoxel::GetEmptyVoxel();
-	}
-	if (VoxelData[CurrentVoxelIndex] == NULL)
-	{
-		return UVoxel::GetEmptyVoxel();
+		return FVoxel::GetEmptyVoxel();
 	}
 	return VoxelData[CurrentVoxelIndex];
 }
@@ -189,5 +180,5 @@ int32 APagedChunk::CalculateSizeInBytes(uint8 ChunkSideLength)
 {
 	// Note: We disregard the size of the other class members as they are likely to be very small compared to the size of the
 	// allocated voxel data. This also keeps the reported size as a power of two, which makes other memory calculations easier.
-	return ChunkSideLength * ChunkSideLength * ChunkSideLength * sizeof(UVoxel);
+	return ChunkSideLength * ChunkSideLength * ChunkSideLength * sizeof(FVoxel);
 }

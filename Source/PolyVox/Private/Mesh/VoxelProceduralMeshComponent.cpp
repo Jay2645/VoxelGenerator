@@ -225,7 +225,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 
 				// The last bit of our cube index is obtained by looking
 				// at the relevant voxel and comparing it to the threshold
-				UVoxel* v111 = sampler.GetVoxel();
+				FVoxel v111 = sampler.GetVoxel();
 				if (controller->ConvertToDensity(v111) < Threshold) uCellIndex |= 128;
 
 				// The current value becomes the previous value, ready for the next iteration.
@@ -266,7 +266,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 					if ((uEdge & 64) && (uXRegSpace > 0))
 					{
 						sampler.MoveNegativeX();
-						UVoxel* v011 = sampler.GetVoxel();
+						FVoxel v011 = sampler.GetVoxel();
 						auto v011Density = controller->ConvertToDensity(v011);
 						const float fInterp = static_cast<float>(Threshold - v011Density) / static_cast<float>(v111Density - v011Density);
 
@@ -285,7 +285,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						UVoxel* uMaterial = controller->BlendMaterials(v011, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v011, v111, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16>(v3dPosition.X * 256.0f), static_cast<uint16>(v3dPosition.Y * 256.0f), static_cast<uint16>(v3dPosition.Z * 256.0f));
@@ -304,7 +304,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 					if ((uEdge & 32) && (uYRegSpace > 0))
 					{
 						sampler.MoveNegativeY();
-						UVoxel* v101 = sampler.GetVoxel();
+						FVoxel v101 = sampler.GetVoxel();
 						auto v101Density = controller->ConvertToDensity(v101);
 						const float fInterp = static_cast<float>(Threshold - v101Density) / static_cast<float>(v111Density - v101Density);
 
@@ -323,7 +323,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						UVoxel* uMaterial = controller->BlendMaterials(v101, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v101, v111, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16_t>(v3dPosition.X * 256.0f), static_cast<uint16_t>(v3dPosition.Y * 256.0f), static_cast<uint16_t>(v3dPosition.Z * 256.0f));
@@ -342,7 +342,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 					if ((uEdge & 1024) && (uZRegSpace > 0))
 					{
 						sampler.MoveNegativeZ();
-						UVoxel* v110 = sampler.GetVoxel();
+						FVoxel v110 = sampler.GetVoxel();
 						auto v110Density = controller->ConvertToDensity(v110);
 						const float fInterp = static_cast<float>(Threshold - v110Density) / static_cast<float>(v111Density - v110Density);
 
@@ -361,7 +361,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						UVoxel* uMaterial = controller->BlendMaterials(v110, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v110, v111, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16_t>(v3dPosition.X * 256.0f), static_cast<uint16_t>(v3dPosition.Y * 256.0f), static_cast<uint16_t>(v3dPosition.Z * 256.0f));
@@ -526,10 +526,10 @@ TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const
 		triangle.Vertex2.Position += decodedMesh.Offset;
 
 		// Get Material ID
-		uint8 materialID = triangle.Vertex0.Data->Material;
-		if (triangle.Vertex1.Data->Material == triangle.Vertex2.Data->Material)
+		uint8 materialID = triangle.Vertex0.Data.Material;
+		if (triangle.Vertex1.Data.Material == triangle.Vertex2.Data.Material)
 		{
-			materialID = triangle.Vertex1.Data->Material;
+			materialID = triangle.Vertex1.Data.Material;
 		}
 		triangle.MaterialID = materialID;
 		if (materialID >= meshSections.Num())
