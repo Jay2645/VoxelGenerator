@@ -28,7 +28,7 @@ SOFTWARE.
 #include "DrawDebugHelpers.h"
 #include "VoxelProceduralMeshComponent.h"
 
-#define DO_CHECK = 1
+//#define DO_CHECK = 1
 
 void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(ABaseVolume* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials)
 {

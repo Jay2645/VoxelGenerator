@@ -43,7 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
 	bool bIsSolid;
 
-	FVoxel::FVoxel()
+	FVoxel()
 	{
 		Material = 0;
 		bIsSolid = false;

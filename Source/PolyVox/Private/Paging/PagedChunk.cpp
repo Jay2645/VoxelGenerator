@@ -28,7 +28,7 @@ SOFTWARE.
 #include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedChunk.h"
 
-#define DO_CHECK = 1
+//#define DO_CHECK = 1
 
 APagedChunk::APagedChunk()
 {
