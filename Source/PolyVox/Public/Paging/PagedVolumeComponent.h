@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include "Components/ActorComponent.h"
 #include "Pager.h"
+#include "Containers/Queue.h"
 #include "PagedVolumeComponent.generated.h"
 
 class APagedChunk;

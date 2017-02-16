@@ -25,6 +25,10 @@ SOFTWARE.
 
 #include "PolyVoxPrivatePCH.h"
 #include "PagedChunk.h"
+#include "GameFramework/DefaultPawn.h"
+#include "GameFramework/Controller.h"
+#include "Engine/World.h"
+#include "Engine/Texture2D.h"
 #include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedVolumeComponent.h"
 

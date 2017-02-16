@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Voxel.h"
+#include "Materials/MaterialInterface.h"
 #include "RegionHelper.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPolyVox, Log, All);
