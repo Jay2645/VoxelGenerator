@@ -30,6 +30,8 @@ SOFTWARE.
 #include "Engine/World.h"
 #include "Engine/Texture2D.h"
 #include "Mesh/VoxelProceduralMeshComponent.h"
+#include "DrawDebugHelpers.h"
+#include "Utils/ArrayHelper.h"
 #include "PagedVolumeComponent.h"
 
 
@@ -472,11 +474,11 @@ void UPagedVolumeComponent::SetRegionHeightmap(const FRegion& Region, const TArr
 			{
 				if (z <= targetHeight)
 				{
-					SetVoxelByCoordinates(x, y, z, Filler);
+					SetVoxelByCoordinates(y, x, z, Filler);
 				}
 				else
 				{
-					SetVoxelByCoordinates(x, y, z, FVoxel::GetEmptyVoxel());
+					SetVoxelByCoordinates(y, x, z, FVoxel::GetEmptyVoxel());
 				}
 			}
 		}
@@ -496,17 +498,17 @@ void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<
 		for (int y = Region.LowerY; y < Region.UpperY; y++)
 		{
 			float targetHeightPercent = UArrayHelper::Get2DFloat(Heights, x, y, regionWidth);
-			int32 targetHeight = FMath::CeilToInt(URegionHelper::GetDepthInCells(Region) * targetHeightPercent);
+			int32 targetHeight = FMath::FloorToInt(URegionHelper::GetDepthInCells(Region) * targetHeightPercent);
 			uint8 targetMaterial = UArrayHelper::Get2DUint8(Materials, x, y, regionWidth);
 			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
 			{
 				if (z <= targetHeight)
 				{
-					SetVoxelByCoordinates(x, y, z, FVoxel::MakeVoxel(targetMaterial, true));
+					SetVoxelByCoordinates(y, x, z, FVoxel::MakeVoxel(targetMaterial, true));
 				}
 				else
 				{
-					SetVoxelByCoordinates(x, y, z, FVoxel::GetEmptyVoxel());
+					SetVoxelByCoordinates(y, x, z, FVoxel::GetEmptyVoxel());
 				}
 			}
 		}
@@ -613,7 +615,23 @@ void UPagedVolumeComponent::DrawVolumeAsDebug(const FRegion& DebugRegion)
 				}
 				else
 				{
-					DrawDebugBox(GetWorld(), FVector(x * VoxelSize, y * VoxelSize, z * VoxelSize), FVector(VoxelSize, VoxelSize, VoxelSize), FColor::Red, true);
+					FVoxel neighbor = GetVoxelByCoordinates(x, y, z + 1);
+					if (neighbor.bIsSolid)
+					{
+						continue;
+					}
+					FColor color = FColor::Red;
+
+					FVector v0 = FVector(x * VoxelSize, y * VoxelSize, z * VoxelSize);
+					FVector v1 = FVector(v0.X, v0.Y + VoxelSize, v0.Z);
+					FVector v2 = FVector(v0.X + VoxelSize, v0.Y, v0.Z);
+					FVector v3 = FVector(v2.X, v1.Y, v0.Z);
+					//DrawDebugSphere(world, v0, 100, 4, color, true);
+					DrawDebugLine(GetWorld(), v0, v1, color, true);
+					DrawDebugLine(GetWorld(), v0, v2, color, true);
+					DrawDebugLine(GetWorld(), v3, v2, color, true);
+					DrawDebugLine(GetWorld(), v3, v1, color, true);
+					//DrawDebugBox(GetWorld(), FVector(x * VoxelSize, y * VoxelSize, z * VoxelSize), FVector(VoxelSize, VoxelSize, VoxelSize), FColor::Red, true);
 				}
 			}
 		}
