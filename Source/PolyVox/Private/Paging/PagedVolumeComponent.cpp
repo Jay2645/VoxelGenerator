@@ -493,13 +493,16 @@ void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<
 	}
 
 	int32 regionWidth = URegionHelper::GetWidthInCells(Region);
+	int32 regionDepth = URegionHelper::GetDepthInCells(Region);
+
 	for (int x = Region.LowerX; x < Region.UpperX; x++)
 	{
 		for (int y = Region.LowerY; y < Region.UpperY; y++)
 		{
-			float targetHeightPercent = UArrayHelper::Get2DFloat(Heights, x, y, regionWidth);
-			int32 targetHeight = FMath::FloorToInt(URegionHelper::GetDepthInCells(Region) * targetHeightPercent);
 			uint8 targetMaterial = UArrayHelper::Get2DUint8(Materials, x, y, regionWidth);
+			
+			float targetHeightPercent = UArrayHelper::Get2DFloat(Heights, x, y, regionWidth);
+			int32 targetHeight = Region.LowerZ + FMath::RoundToInt(regionDepth * targetHeightPercent);
 			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
 			{
 				if (z <= targetHeight)
