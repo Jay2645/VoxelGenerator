@@ -51,6 +51,17 @@ public:
 	}
 }*/
 
+USTRUCT(BlueprintType)
+struct POLYVOX_API FVoxelMaterial
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
+		UMaterialInterface* Material;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
+		bool bShouldCreateCollision;
+};
+
 /** Represents a part of a Volume.
 *
 *  Many operations in PolyVox are constrained to only part of a volume. For example, when running the surface extractors

@@ -25,7 +25,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "BaseVolume.h"
+#include "PagedVolumeComponent.h"
 #include "Pager.h"
 #include "PagedChunk.h"
 #include "Mesh/VoxelProceduralMeshComponent.h"
@@ -35,96 +35,15 @@ SOFTWARE.
  * 
  */
  UCLASS(Blueprintable)
-class POLYVOX_API APagedVolume : public ABaseVolume
+class POLYVOX_API APagedVolume : public AActor
 {
 	GENERATED_BODY()
 public:
 	APagedVolume();
-	~APagedVolume();
 
-	virtual void BeginPlay() override;
-	virtual void TickActor(float DeltaTime, enum ELevelTick TickType, FActorTickFunction& ThisTickFunction) override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Volume")
+	UPagedVolumeComponent* PagedVolumeComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pager")
-	TSubclassOf<UPager> VolumePager;
-	UPROPERTY()
-	int32 TargetMemoryUsageInBytes = 268435456;
-	// The size of the chunks
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chunk")
-	uint8 ChunkSideLength;
-
-	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos) override;
-	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
-	virtual FVoxel GetVoxelByVector(const FVector& Coordinates) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos, FVoxel Voxel) override;
-	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void SetVoxelByVector(const FVector& Coordinates, FVoxel Voxel) override;
-
-	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes);
-
-	// Tries to ensure that the voxels within the specified Region are loaded into memory.
-	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
-	TArray<APagedChunk*> Prefetch(FRegion PrefetchRegion);
-	// Removes all voxels from memory
-	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
-	void FlushAll();
-
-	//UFUNCTION(BlueprintPure, Category = "Volume|Utility")
-	//virtual bool RegionIsEmpty(const FRegion& Region) override;
-	
-	UFUNCTION(BlueprintPure, Category = "Volume|Utility")
-	virtual int32 CalculateSizeInBytes() const override;
-
-	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
-	void CreateMarchingCubesMesh(FRegion Region, TArray<FVoxelMaterial> VoxelMaterials);
-
-	virtual uint8 GetSideLengthPower() const override;
-	bool CanReuseLastAccessedChunk(int32 iChunkX, int32 iChunkY, int32 iChunkZ) const;
-	APagedChunk* GetChunk(int32 uChunkX, int32 uChunkY, int32 uChunkZ);
-	UPROPERTY()
-	APagedChunk* LastAccessedChunk = nullptr;
-
-private:
-	TQueue<APagedChunk*> ChunksToCreateMesh;
-	UPROPERTY()
-	APagedChunk* ChunkCurrentlyMakingMeshFor;
-	UPROPERTY()
-	TArray<FVoxelMaterial> ChunkMaterials;
-
-	UPROPERTY()
-	int32 LastAccessedChunkX = 0;
-	UPROPERTY()
-	int32 LastAccessedChunkY = 0;
-	UPROPERTY()
-	int32 LastAccessedChunkZ = 0;
-
-	UPROPERTY()
-	int32 ChunkCountLimit = 0;
-
-	// Chunks are stored in the following array which is used as a hash-table. Conventional wisdom is that such a hash-table
-	// should not be more than half full to avoid conflicts, and a practical chunk size seems to be 64^3. With this configuration
-	// there can be up to 32768*64^3 = 8 gigavoxels (with each voxel perhaps being many bytes). This should effectively make use 
-	// of even high end machines. Of course, the user can choose to limit the memory usage in which case much less of the chunk 
-	// array will actually be used. None-the-less, we have chosen to use a fixed size array (rather than a vector) as it appears to 
-	// be slightly faster (probably due to the extra pointer indirection in a vector?) and the actual size of this array should
-	// just be 1Mb or so.
-	static const uint32 CHUNK_ARRAY_SIZE = 65536;
-	UPROPERTY()
-	TArray<APagedChunk*> ArrayChunks;
-
-	UPROPERTY()
-	uint8 ChunkSideLengthPower;
-	UPROPERTY()
-	int32 ChunkMask;
-
-	UPROPERTY()
-	UPager* Pager = nullptr;
-
-	UFUNCTION()
-	// 256 * 1024 * 1024 = 268435456
-	void InitializeVolume(TSubclassOf<UPager> PagerClass, int32 MemoryUsageInBytes = 268435456, uint8 VolumeChunkSideLength = 32);
+	UFUNCTION(BlueprintCallable, Category = "Volume")
+	UPagedVolumeComponent* GetPagedVolume() const;
 };

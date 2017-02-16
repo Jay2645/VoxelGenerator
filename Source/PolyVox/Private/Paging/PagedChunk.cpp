@@ -61,12 +61,12 @@ void APagedChunk::RemoveChunk()
 	VoxelData.Empty();
 }
 
-void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/)
+void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/, float VoxelSize /*= 100.0f*/)
 {
 	ChunkSpacePosition = Position;
-	//SetActorLocation(Position * ChunkSideLength * 100.0f);
 	SideLength = ChunkSideLength;
 	SideLengthPower = FMath::Log2(SideLength);
+	VoxelMesh->VoxelSize = VoxelSize;
 	Pager = VoxelPager;
 	bDataModified = true;
 	VoxelData.Empty();
@@ -100,7 +100,7 @@ void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* Vox
 	chunkName += FString::FromInt((int32)v3dUpper.Z);
 	chunkName += FString(")");
 	Rename(*chunkName);
-	SetActorLabel(chunkName);
+	//this->SetActorLabel(chunkName);
 	// Page the data in
 	Pager->PageIn(ChunkRegion, this);
 
@@ -170,7 +170,7 @@ void APagedChunk::SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 
 	bNeedsNewMarchingCubesMesh = true;
 }
 
-void APagedChunk::CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials)
+void APagedChunk::CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, TArray<FVoxelMaterial> VoxelMaterials)
 {
 	if(bNeedsNewMarchingCubesMesh)
 	{

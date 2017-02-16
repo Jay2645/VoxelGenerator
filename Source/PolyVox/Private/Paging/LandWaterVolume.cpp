@@ -1,8 +1,7 @@
 /*******************************************************************************
 The MIT License (MIT)
 
-Copyright (c) 2015 David Williams and Matthew Williams
-Modified for use in Unreal Engine 4 by Jay Stevens
+Copyright (c) 2017 Jay Stevens
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -23,45 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *******************************************************************************/
 
-#pragma once
 
-#include "RegionHelper.h"
+#include "PolyVoxPrivatePCH.h"
+#include "LandWaterVolume.h"
 
-class UPagedVolumeComponent;
-class APagedChunk;
-
-/**
- * 
- */
-class UVolumeSampler
-{
-public:
-	UVolumeSampler(UPagedVolumeComponent* VolumeData);
-	UVolumeSampler(const UVolumeSampler& Sampler);
-
-	FVoxel GetVoxel();
-	void SetPosition(int32 XPos, int32 YPos, int32 ZPos);
-	void MoveNegativeX();
-	void MovePositiveX();
-	void MoveNegativeY();
-	void MovePositiveY();
-	void MoveNegativeZ();
-	void MovePositiveZ();
-
-private:
-	UPagedVolumeComponent* Volume;
-
-	//The current position in the volume
-	int32 XPosInVolume;
-	int32 YPosInVolume;
-	int32 ZPosInVolume;
-
-	int32 CurrentVoxelIndex;
-	APagedChunk* CurrentChunk;
-
-	int32 XPosInChunk;
-	int32 YPosInChunk;
-	int32 ZPosInChunk;
-
-	uint16 ChunkSideLengthMinusOne;
-};

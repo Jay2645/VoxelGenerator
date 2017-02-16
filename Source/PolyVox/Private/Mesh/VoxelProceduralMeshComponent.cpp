@@ -30,7 +30,7 @@ SOFTWARE.
 
 //#define DO_CHECK = 1
 
-void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(ABaseVolume* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials)
+void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(UPagedVolumeComponent* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials)
 {
 	auto rawMesh = GetEncodedMesh(VolumeData, Region, UMarchingCubesDefaultController::StaticClass());
 	TArray<FVoxelMeshSection> meshSections = GenerateTriangles(rawMesh);
@@ -45,7 +45,7 @@ void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(ABaseVolume* VolumeD
 	}
 	for (int i = 0; i < meshSections.Num(); i++)
 	{
-		FProcMeshSection meshSection = CreateMeshSectionData(meshSections[i].Triangles, VoxelMaterials[i].bShouldCreateCollision);
+		FProcMeshSection meshSection = CreateMeshSectionData(meshSections[i].Triangles, VoxelMaterials[i].bShouldCreateCollision, VoxelSize);
 		SetProcMeshSection(i, meshSection);
 		if (VoxelMaterials.Num() > i)
 		{
@@ -77,10 +77,9 @@ FVoxelMesh UVoxelProceduralMeshComponent::AddTriangle(FVoxelMesh& VoxelMesh, con
 	return VoxelMesh;
 }
 
-FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVoxelTriangle> Triangles, bool bShouldEnableCollision)
+FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVoxelTriangle> Triangles, bool bShouldEnableCollision, float VoxelSize)
 {
 	FProcMeshSection meshSection;
-	float voxelSize = 100.0f;
 
 	meshSection.ProcVertexBuffer.Reset();
 	for (int i = 0; i < Triangles.Num(); i++)
@@ -89,9 +88,9 @@ FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVo
 		FProcMeshVertex vertex1;
 		FProcMeshVertex vertex0;
 
-		vertex0.Position = Triangles[i].Vertex0.Position * voxelSize;
-		vertex1.Position = Triangles[i].Vertex1.Position * voxelSize;
-		vertex2.Position = Triangles[i].Vertex2.Position * voxelSize;
+		vertex0.Position = Triangles[i].Vertex0.Position * VoxelSize;
+		vertex1.Position = Triangles[i].Vertex1.Position * VoxelSize;
+		vertex2.Position = Triangles[i].Vertex2.Position * VoxelSize;
 
 		// Calculate the tangents of our triangle
 		const FVector Edge01 = FVector(Triangles[i].Vertex1.Position - Triangles[i].Vertex0.Position);
@@ -139,7 +138,7 @@ FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVo
 	return meshSection;
 }
 
-FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FRegion Region, TSubclassOf<UMarchingCubesDefaultController> Controller)
+FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* Volume, FRegion Region, TSubclassOf<UMarchingCubesDefaultController> Controller)
 {
 	// Validate parameters
 	checkf(Volume != NULL, TEXT("Provided volume cannot be null"));
@@ -174,7 +173,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(ABaseVolume* Volume, FR
 
 	// A sampler pointing at the beginning of the region, which gets incremented to always point at the beginning of a slice.
 
-	UVolumeSampler startOfSlice((APagedVolume*)Volume);
+	UVolumeSampler startOfSlice((UPagedVolumeComponent*)Volume);
 	startOfSlice.SetPosition(URegionHelper::GetLowerX(Region), URegionHelper::GetLowerY(Region), URegionHelper::GetLowerZ(Region));
 
 	for (uint32 uZRegSpace = 0; uZRegSpace < uRegionDepthInVoxels; uZRegSpace++)

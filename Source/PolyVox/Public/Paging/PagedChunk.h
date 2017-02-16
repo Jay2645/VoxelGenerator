@@ -28,6 +28,7 @@ SOFTWARE.
 #include "UObject/NoExportTypes.h"
 #include "RegionHelper.h"
 #include "Pager.h"
+#include "PagedVolumeComponent.h"
 #include "Mesh/VoxelProceduralMeshComponent.h"
 #include "PagedChunk.generated.h"
 
@@ -37,7 +38,7 @@ SOFTWARE.
 UCLASS(BlueprintType)
 class POLYVOX_API APagedChunk : public AActor
 {
-	friend class APagedVolume;
+	friend class UPagedVolumeComponent;
 	GENERATED_BODY()
 public:
 	APagedChunk();
@@ -51,7 +52,7 @@ public:
 	bool bDueToBePagedOut;
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr);
+	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr, float VoxelSize = 100.0f);
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
 	void RemoveChunk();
@@ -72,7 +73,7 @@ public:
 	void SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
-	void CreateMarchingCubesMesh(ABaseVolume* Volume, TArray<FVoxelMaterial> VoxelMaterials);
+	void CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, TArray<FVoxelMaterial> VoxelMaterials);
 	
 	FVoxel GetDataAtIndex(const int32 CurrentVoxelIndex) const;
 

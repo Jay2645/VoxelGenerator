@@ -49,16 +49,17 @@ static const std::array<int32, 256> deltaY = {{ 2, 14, 2, 110, 2, 14, 2, 878, 2,
 static const std::array<int32, 256> deltaZ = {{ 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 898780, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 7190236, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 898780, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 112348, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4, 14044, 4, 28, 4, 220, 4, 28, 4, 1756, 4, 28, 4, 220, 4, 28, 4 }};
 
 
-UVolumeSampler::UVolumeSampler(APagedVolume* VolumeData)
+UVolumeSampler::UVolumeSampler(UPagedVolumeComponent* VolumeData)
 {
+	checkf(VolumeData != NULL, TEXT("Provided volume cannot be null"));
 	Volume = VolumeData;
-	ChunkSideLengthMinusOne = Volume->ChunkSideLength - 1;
+	ChunkSideLengthMinusOne = Volume->GetChunkSideLength() - 1;
 }
 
 UVolumeSampler::UVolumeSampler(const UVolumeSampler& Sampler)
 {
 	Volume = Sampler.Volume;
-	ChunkSideLengthMinusOne = Volume->ChunkSideLength - 1;
+	ChunkSideLengthMinusOne = Volume->GetChunkSideLength() - 1;
 
 	XPosInVolume = Sampler.XPosInVolume;
 	YPosInVolume = Sampler.YPosInVolume;
@@ -110,7 +111,14 @@ void UVolumeSampler::SetPosition(int32 XPos, int32 YPos, int32 ZPos)
 
 		uint32 voxelIndexInChunk = morton256_x[XPosInChunk] | morton256_y[YPosInChunk] | morton256_z[ZPosInChunk];
 
-		CurrentChunk = Volume->CanReuseLastAccessedChunk(xChunk, yChunk, zChunk) ? Volume->LastAccessedChunk : Volume->GetChunk(xChunk, yChunk, zChunk);
+		if (Volume->CanReuseLastAccessedChunk(xChunk, yChunk, zChunk))
+		{
+			CurrentChunk = Volume->GetLastAccessedChunk();
+		}
+		else
+		{
+			CurrentChunk = Volume->GetChunk(xChunk, yChunk, zChunk);
+		}
 
 		CurrentVoxelIndex = voxelIndexInChunk;
 	}
