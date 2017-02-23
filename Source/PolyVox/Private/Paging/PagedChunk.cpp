@@ -61,9 +61,10 @@ void APagedChunk::RemoveChunk()
 	VoxelData.Empty();
 }
 
-void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/, float VoxelSize /*= 100.0f*/)
+void APagedChunk::InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager /*= nullptr*/, float VoxelSize /*= 100.0f*/, int32 Seed /*= 123*/)
 {
 	ChunkSpacePosition = Position;
+	RandomSeed = Seed;
 	SideLength = ChunkSideLength;
 	SideLengthPower = FMath::Log2(SideLength);
 	VoxelMesh->VoxelSize = VoxelSize;

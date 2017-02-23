@@ -29,6 +29,45 @@ SOFTWARE.
 APagedVolume::APagedVolume()
 {
 	PagedVolumeComponent = CreateDefaultSubobject<UPagedVolumeComponent>(TEXT("Paged Volume"));
+	/**
+	* Total list of biomes:
+	*		0 - OCEAN
+	*		1 - ICE
+	*		2 - MARSH
+	*		3 - LAKE
+	*		4 - COAST
+	*		5 - SNOW
+	*		6 - TUNDRA
+	*		7 - BARE
+	*		8 - SCORCHED
+	*		9 - TAIGA
+	*		10 - SHRUBLAND
+	*		11 - TEMPERATE DESERT
+	*		12 - TEMPERATE RAIN FOREST
+	*		13 - TEMPERATE DECIDUOUS FOREST
+	*		14 - GRASSLAND
+	*		15 - TROPICAL RAIN FOREST
+	*		16 - TROPICAL SEASONAL FOREST
+	*		17 - SUBTROPICAL DESERT
+	*/
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
+	VolumeLandMaterials.Add(FVoxelMaterial());
 }
 
 UPagedVolumeComponent* APagedVolume::GetPagedVolume() const

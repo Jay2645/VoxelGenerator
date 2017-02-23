@@ -61,6 +61,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxels")
 	float VoxelSize = 100.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise")
+	int32 RandomSeed = 123;
+
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
 		virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")

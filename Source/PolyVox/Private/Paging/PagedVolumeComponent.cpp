@@ -355,7 +355,6 @@ bool UPagedVolumeComponent::CanReuseLastAccessedChunk(int32 ChunkX, int32 ChunkY
 
 APagedChunk* UPagedVolumeComponent::GetChunk(int32 ChunkX, int32 ChunkY, int32 ChunkZ)
 {
-	UE_LOG(LogPolyVox, Log, TEXT("Fetching chunk at %d, %d, %d."), ChunkX, ChunkY, ChunkZ);
 	APagedChunk* chunk = nullptr;
 
 	// Extract the lower five bits from each position component.
@@ -393,7 +392,7 @@ APagedChunk* UPagedVolumeComponent::GetChunk(int32 ChunkX, int32 ChunkY, int32 C
 		// The chunk was not found so we will create a new one.
 		FVector chunkPos(ChunkX, ChunkY, ChunkZ);
 		chunk = GetWorld()->SpawnActor<APagedChunk>();
-		chunk->InitChunk(chunkPos, ChunkSideLength, Pager, VoxelSize);
+		chunk->InitChunk(chunkPos, ChunkSideLength, Pager, VoxelSize, RandomSeed);
 		chunk->bDueToBePagedOut = false;
 
 		// Store the chunk at the appropriate place in out chunk array. Ideally this place is

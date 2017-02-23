@@ -44,6 +44,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Volume")
 	UPagedVolumeComponent* PagedVolumeComponent;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxels")
+	TArray<FVoxelMaterial> VolumeLandMaterials;
+
 	UFUNCTION(BlueprintCallable, Category = "Volume")
 	UPagedVolumeComponent* GetPagedVolume() const;
 };

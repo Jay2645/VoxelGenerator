@@ -52,7 +52,7 @@ public:
 	bool bDueToBePagedOut;
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
-	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr, float VoxelSize = 100.0f);
+	void InitChunk(FVector Position, uint8 ChunkSideLength, UPager* VoxelPager = nullptr, float VoxelSize = 100.0f, int32 Seed = 123);
 
 	UFUNCTION(BlueprintCallable, Category = "Chunk|Voxels")
 	void RemoveChunk();
@@ -76,6 +76,9 @@ public:
 	void CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, TArray<FVoxelMaterial> VoxelMaterials);
 	
 	FVoxel GetDataAtIndex(const int32 CurrentVoxelIndex) const;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Random")
+	int32 RandomSeed;
 
 private:
 	static int32 CalculateSizeInBytes(uint8 ChunkSideLength);

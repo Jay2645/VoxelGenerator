@@ -12,8 +12,15 @@ UCLASS()
 class POLYVOX_API ALandWaterVolume : public APagedVolume
 {
 	GENERATED_BODY()
-	
-	
-	
-	
+public:
+	ALandWaterVolume();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Volume")
+	UPagedVolumeComponent* WaterPagedVolumeComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxels")
+	TArray<FVoxelMaterial> VolumeWaterMaterials;
+
+	UFUNCTION(BlueprintCallable, Category = "Volume")
+	UPagedVolumeComponent* GetWaterPagedVolume() const;
 };

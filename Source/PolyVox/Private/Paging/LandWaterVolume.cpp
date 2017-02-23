@@ -26,3 +26,12 @@ SOFTWARE.
 #include "PolyVoxPrivatePCH.h"
 #include "LandWaterVolume.h"
 
+ALandWaterVolume::ALandWaterVolume()
+{
+	WaterPagedVolumeComponent = CreateDefaultSubobject<UPagedVolumeComponent>(TEXT("Water Paged Volume"));
+}
+
+UPagedVolumeComponent* ALandWaterVolume::GetWaterPagedVolume() const
+{
+	return WaterPagedVolumeComponent;
+}
