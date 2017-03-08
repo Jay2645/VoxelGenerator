@@ -193,7 +193,7 @@ void UPagedVolumeComponent::SetVoxelByVector(const FVector& Coordinates, FVoxel 
 	SetVoxelByCoordinates((int32)Coordinates.X, (int32)Coordinates.Y, (int32)Coordinates.Z, Voxel);
 }
 
-void UPagedVolumeComponent::PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes)
+void UPagedVolumeComponent::PageInChunksAroundPlayer(AController* PlayerController, const int32 MaxWorldHeight, const uint8 NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes)
 {
 	if (PlayerController == NULL)
 	{

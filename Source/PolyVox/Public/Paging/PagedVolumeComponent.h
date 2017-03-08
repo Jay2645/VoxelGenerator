@@ -75,7 +75,7 @@ public:
 		virtual void SetVoxelByVector(const FVector& Coordinates, FVoxel Voxel);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-	virtual void PageInChunksAroundPlayer(AController* PlayerController, const int32& MaxWorldHeight, const uint8& NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes);
+	virtual void PageInChunksAroundPlayer(AController* PlayerController, const int32 MaxWorldHeight, const uint8 NumberOfChunksToPageIn, TArray<FVoxelMaterial> Materials, bool bUseMarchingCubes);
 
 	// Tries to ensure that the voxels within the specified Region are loaded into memory.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Utility")
