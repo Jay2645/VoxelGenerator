@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Paging/Pager.h"
+#include "GameplayTagContainer.h"
 #include "FlatPager.generated.h"
 
 /**
@@ -20,7 +21,7 @@ public:
 	int32 GroundLevel;
 	// The material to use for the voxel.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chunk")
-	uint8 VoxelMaterial;
+	FGameplayTag VoxelMaterial;
 
 protected:
 	virtual void PageIn_Implementation(const FRegion& Region, APagedChunk* Chunk) override;

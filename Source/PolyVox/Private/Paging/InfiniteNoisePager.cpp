@@ -27,41 +27,41 @@ UInfiniteNoisePager::UInfiniteNoisePager()
 	*		17 - SUBTROPICAL DESERT
 	*/
 	FVoxelNoiseSettings oceanFloorSettings;
-	BiomeNoiseSettings.Add(0, oceanFloorSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Water.Ocean")), oceanFloorSettings);
 	FVoxelNoiseSettings iceLakebedSettings;
-	BiomeNoiseSettings.Add(1, iceLakebedSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Frozen.Ice")), iceLakebedSettings);
 	FVoxelNoiseSettings marshLakebedSettings;
-	BiomeNoiseSettings.Add(2, marshLakebedSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Water.Marsh")), marshLakebedSettings);
 	FVoxelNoiseSettings plainLakebedSettings;
-	BiomeNoiseSettings.Add(3, plainLakebedSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Water.Lake")), plainLakebedSettings);
 	FVoxelNoiseSettings coastSettings;
-	BiomeNoiseSettings.Add(4, coastSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Coast")), coastSettings);
 	FVoxelNoiseSettings snowSettings;
-	BiomeNoiseSettings.Add(5, snowSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Frozen.Snow")), snowSettings);
 	FVoxelNoiseSettings tundraSettings;
-	BiomeNoiseSettings.Add(6, tundraSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Frozen.Tundra")), tundraSettings);
 	FVoxelNoiseSettings bareSettings;
-	BiomeNoiseSettings.Add(7, bareSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Bare")), bareSettings);
 	FVoxelNoiseSettings scorchedSettings;
-	BiomeNoiseSettings.Add(8, scorchedSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Scorched")), scorchedSettings);
 	FVoxelNoiseSettings taigaSettings;
-	BiomeNoiseSettings.Add(9, taigaSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Frozen.Taiga")), taigaSettings);
 	FVoxelNoiseSettings shrublandSettings;
-	BiomeNoiseSettings.Add(10, shrublandSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Shrubland")), shrublandSettings);
 	FVoxelNoiseSettings temperateDesertSettings;
-	BiomeNoiseSettings.Add(11, temperateDesertSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Desert.TemperateDesert")), temperateDesertSettings);
 	FVoxelNoiseSettings temperateRainForestSettings;
-	BiomeNoiseSettings.Add(12, temperateRainForestSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Forest.TemperateRainForest")), temperateRainForestSettings);
 	FVoxelNoiseSettings temperateDeciduousForestSettings;
-	BiomeNoiseSettings.Add(13, temperateDeciduousForestSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Forest.TemperateDeciduousForest")), temperateDeciduousForestSettings);
 	FVoxelNoiseSettings grasslandSettings;
-	BiomeNoiseSettings.Add(14, grasslandSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Grassland")), grasslandSettings);
 	FVoxelNoiseSettings tropicalRainForestSettings;
-	BiomeNoiseSettings.Add(15, tropicalRainForestSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Forest.TropicalRainForest")), tropicalRainForestSettings);
 	FVoxelNoiseSettings tropicalSeasonalForestSettings;
-	BiomeNoiseSettings.Add(16, tropicalSeasonalForestSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Forest.TropicalSeasonalForest")), tropicalSeasonalForestSettings);
 	FVoxelNoiseSettings subtropicalDesertSettings;
-	BiomeNoiseSettings.Add(17, subtropicalDesertSettings);
+	BiomeNoiseSettings.Add(FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static.Desert.SubtropicalDesert")), subtropicalDesertSettings);
 
 	bGenerateNewBiomes = true;
 }
@@ -73,20 +73,20 @@ void UInfiniteNoisePager::PageIn_Implementation(const FRegion& Region, APagedChu
 	{
 		for (int y = Region.LowerY; y < Region.UpperY; y++)
 		{
-			uint8 chunkBiome = 0;
+			FGameplayTag chunkBiome = FGameplayTag::EmptyTag;
 
 			FVoxel bottomVoxel = Chunk->GetVoxelByCoordinatesWorldSpace(x, y, Region.LowerZ);
-			if (bottomVoxel.bIsSolid)
+			if (bottomVoxel.VoxelType.IsValid())
 			{
 				// The bottom voxel is solid, so iterate over the rest of the region
 				FVoxel currentVoxel = bottomVoxel;
 				for (int z = Region.LowerZ; z < Region.UpperZ - 1; z++)
 				{
 					FVoxel nextVoxel = Chunk->GetVoxelByCoordinatesWorldSpace(x, y, z + 1);
-					if (!nextVoxel.bIsSolid)
+					if (!nextVoxel.VoxelType.IsValid())
 					{
 						// Next voxel is air, so set the biome to the top voxel
-						chunkBiome = currentVoxel.Material;
+						chunkBiome = currentVoxel.VoxelType;
 						break;
 					}
 					currentVoxel = nextVoxel;
@@ -103,7 +103,7 @@ void UInfiniteNoisePager::PageIn_Implementation(const FRegion& Region, APagedChu
 			FVoxelNoiseSettings* currentSettings = BiomeNoiseSettings.Find(chunkBiome);
 			if (currentSettings == NULL)
 			{
-				UE_LOG(LogPolyVox, Warning, TEXT("No voxel settings for material %d!"), chunkBiome);
+				UE_LOG(LogPolyVox, Warning, TEXT("No voxel settings for material %s!"), *chunkBiome.ToString());
 				break;
 			}
 			FVoxelNoiseSettings biomeSettings = *currentSettings;
@@ -119,7 +119,7 @@ void UInfiniteNoisePager::PageIn_Implementation(const FRegion& Region, APagedChu
 			{
 				if (z <= targetHeight)
 				{
-					Chunk->SetVoxelByCoordinatesWorldSpace(x, y, z, FVoxel::MakeVoxel(chunkBiome, true));
+					Chunk->SetVoxelByCoordinatesWorldSpace(x, y, z, FVoxel::MakeVoxel(chunkBiome));
 				}
 				else
 				{

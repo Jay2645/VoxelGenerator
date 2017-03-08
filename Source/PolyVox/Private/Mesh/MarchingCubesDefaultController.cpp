@@ -27,9 +27,9 @@ SOFTWARE.
 #include "MarchingCubesDefaultController.h"
 
 
-uint8 UMarchingCubesDefaultController::ConvertToDensity(FVoxel Voxel)
+uint8 UMarchingCubesDefaultController::ConvertToDensity(const FVoxel& Voxel, const FGameplayTag& Prefix) const
 {
-	if (Voxel.bIsSolid)
+	if (Voxel.VoxelType.IsValid() && Voxel.VoxelType.MatchesTag(Prefix))
 	{
 		return 255;
 	}
@@ -39,9 +39,9 @@ uint8 UMarchingCubesDefaultController::ConvertToDensity(FVoxel Voxel)
 	}
 }
 
-FVoxel UMarchingCubesDefaultController::BlendMaterials(FVoxel FirstVoxel, FVoxel SecondVoxel, const float Interpolation)
+FVoxel UMarchingCubesDefaultController::BlendMaterials(FVoxel FirstVoxel, FVoxel SecondVoxel, const FGameplayTag& Prefix, const float Interpolation) const
 {
-	if (ConvertToDensity(FirstVoxel) > ConvertToDensity(SecondVoxel))
+	if (ConvertToDensity(FirstVoxel, Prefix) > ConvertToDensity(SecondVoxel, Prefix))
 	{
 		return FirstVoxel;
 	}
@@ -51,7 +51,7 @@ FVoxel UMarchingCubesDefaultController::BlendMaterials(FVoxel FirstVoxel, FVoxel
 	}
 }
 
-uint8 UMarchingCubesDefaultController::GetThreshold()
+uint8 UMarchingCubesDefaultController::GetThreshold() const
 {
 	return Threshold;
 }

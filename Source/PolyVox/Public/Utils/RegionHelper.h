@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "Voxel.h"
+#include "GameplayTagContainer.h"
 #include "Materials/MaterialInterface.h"
 #include "RegionHelper.generated.h"
 
@@ -57,10 +58,18 @@ struct POLYVOX_API FVoxelMaterial
 {
 	GENERATED_BODY()
 public:
+	// The actual Unreal Engine material to use for any voxel using this material
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
-		UMaterialInterface* Material;
+	UMaterialInterface* Material;
+	// Whether the mesh representing this material should create collision.
+	// Keep in mind that while this is likely the behavior you want, creating collision is SLOW.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Material")
-		bool bShouldCreateCollision;
+	bool bShouldCreateCollision;
+	// The GameplayTag specifying what voxel should use this material.
+	// Any voxels which match this GameplayTag EXACTLY will use this material.
+	// Note: This might be changed to a "fuzzy" match later
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
+	FGameplayTag VoxelGameplayTag;
 };
 
 /** Represents a part of a Volume.
@@ -73,24 +82,28 @@ public:
 *  The Region class is used to define these parts (regions) of the volume. Essentially it consists of an upper and lower
 *  bound which specify the range of voxels positions considered to be part of the region. Note that these bounds are
 *  <em>inclusive</em>.
-*
-*  Utility functions can be found in URegionHelper.
 */
 USTRUCT(BlueprintType)
 struct POLYVOX_API FRegion
 {
 	GENERATED_BODY()
 public:
+	// The lower bounds of the region on the X axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 LowerX;
+	// The lower bounds of the region on the Y axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 LowerY;
+	// The lower bounds of the region on the Z axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 LowerZ;
+	// The upper bounds of the region on the X axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 UpperX;
+	// The upper bounds of the region on the Y axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 UpperY;
+	// The upper bounds of the region on the Z axis.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Region")
 	int32 UpperZ;
 
@@ -105,11 +118,13 @@ public:
 		UpperZ = 0;
 	}
 	
+	// Two regions are equal if their upper and lower regions match.
 	FORCEINLINE bool operator==(const FRegion& rhs) const
 	{
 		return	((LowerX == rhs.LowerX) && (LowerY == rhs.LowerY) && (LowerZ == rhs.LowerZ)
 				&& (UpperX == rhs.UpperX) && (UpperY == rhs.UpperY) && (UpperZ == rhs.UpperZ));
 	}
+	// Two regions are not equal if their upper and lower regions do not match.
 	FORCEINLINE bool operator!=(const FRegion& rhs) const
 	{
 		return !(*this == rhs);
@@ -301,6 +316,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Region|Modify")
 	static FRegion ShrinkVector(FRegion& Region, const FVector& Amount);
 
+	// Returns true if the regions intersect one another.
 	UFUNCTION(BlueprintPure, Category = "Region")
 	static bool Intersects(const FRegion& Region, const FRegion& Other);
 };

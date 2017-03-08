@@ -30,10 +30,21 @@ SOFTWARE.
 
 //#define DO_CHECK = 1
 
-void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(UPagedVolumeComponent* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials)
+void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(UPagedVolumeComponent* VolumeData, FRegion Region, const FGameplayTag& Prefix, const TArray<FVoxelMaterial>& VoxelMaterials)
 {
-	auto rawMesh = GetEncodedMesh(VolumeData, Region, UMarchingCubesDefaultController::StaticClass());
-	TArray<FVoxelMeshSection> meshSections = GenerateTriangles(rawMesh);
+	// Get the raw mesh
+	auto rawMesh = GetEncodedMesh(VolumeData, Region, Prefix, UMarchingCubesDefaultController::StaticClass());
+
+	// Convert the VoxelMaterials array to the TMap we need
+	// Map the array index to the MaterialID for the map
+	TMap<FGameplayTag, uint8> voxelTags;
+	for(uint8 i = 0; i < (uint8)VoxelMaterials.Num(); i++)
+	{
+		voxelTags.Add(VoxelMaterials[i].VoxelGameplayTag, i);
+	}
+	
+	// Generate the mesh from the raw mesh
+	TArray<FVoxelMeshSection> meshSections = GenerateTriangles(rawMesh, voxelTags);
 	if (meshSections.Num() > VoxelMaterials.Num())
 	{
 		UE_LOG(LogPolyVox, Warning, TEXT("More mesh sections are being made (%d) than there are materials defined (%d)."), meshSections.Num(), VoxelMaterials.Num());
@@ -41,8 +52,10 @@ void UVoxelProceduralMeshComponent::CreateMarchingCubesMesh(UPagedVolumeComponen
 	}
 	else if (meshSections.Num() == 0)
 	{
+		// No voxels in this chunk
 		return;
 	}
+	
 	for (int i = 0; i < meshSections.Num(); i++)
 	{
 		FProcMeshSection meshSection = CreateMeshSectionData(meshSections[i].Triangles, VoxelMaterials[i].bShouldCreateCollision, VoxelSize);
@@ -138,7 +151,7 @@ FProcMeshSection UVoxelProceduralMeshComponent::CreateMeshSectionData(TArray<FVo
 	return meshSection;
 }
 
-FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* Volume, FRegion Region, TSubclassOf<UMarchingCubesDefaultController> Controller)
+FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* Volume, FRegion Region, const FGameplayTag& Prefix, TSubclassOf<UMarchingCubesDefaultController> Controller)
 {
 	// Validate parameters
 	checkf(Volume != NULL, TEXT("Provided volume cannot be null"));
@@ -225,7 +238,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 				// The last bit of our cube index is obtained by looking
 				// at the relevant voxel and comparing it to the threshold
 				FVoxel v111 = sampler.GetVoxel();
-				if (controller->ConvertToDensity(v111) < Threshold) uCellIndex |= 128;
+				if (controller->ConvertToDensity(v111, Prefix) < Threshold) uCellIndex |= 128;
 
 				// The current value becomes the previous value, ready for the next iteration.
 				uPreviousCellIndex = uCellIndex;
@@ -252,7 +265,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 				// calls). For now we will leave it as-is, until we have more information from real-world profiling.
 				if (uEdge != 0)
 				{
-					auto v111Density = controller->ConvertToDensity(v111);
+					auto v111Density = controller->ConvertToDensity(v111, Prefix);
 
 					// Performance note: Computing normals is one of the bottlencks in the mesh generation process. The
 					// central difference approach actually samples the same voxel more than once as we call it on two
@@ -266,7 +279,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 					{
 						sampler.MoveNegativeX();
 						FVoxel v011 = sampler.GetVoxel();
-						auto v011Density = controller->ConvertToDensity(v011);
+						auto v011Density = controller->ConvertToDensity(v011, Prefix);
 						const float fInterp = static_cast<float>(Threshold - v011Density) / static_cast<float>(v111Density - v011Density);
 
 						// Compute the position
@@ -284,13 +297,13 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						FVoxel uMaterial = controller->BlendMaterials(v011, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v011, v111, Prefix, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16>(v3dPosition.X * 256.0f), static_cast<uint16>(v3dPosition.Y * 256.0f), static_cast<uint16>(v3dPosition.Z * 256.0f));
 						surfaceVertex.Position = v3dScaledPosition;
 						//surfaceVertex.encodedNormal = encodeNormal(v3dNormal);
-						surfaceVertex.Data = uMaterial;
+						surfaceVertex.Data = uMaterial.VoxelType;
 
 						result = AddVertex(result, surfaceVertex);
 						const uint32 uLastVertexIndex = result.Vertices.Num() - 1;
@@ -304,7 +317,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 					{
 						sampler.MoveNegativeY();
 						FVoxel v101 = sampler.GetVoxel();
-						auto v101Density = controller->ConvertToDensity(v101);
+						auto v101Density = controller->ConvertToDensity(v101, Prefix);
 						const float fInterp = static_cast<float>(Threshold - v101Density) / static_cast<float>(v111Density - v101Density);
 
 						// Compute the position
@@ -322,13 +335,13 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						FVoxel uMaterial = controller->BlendMaterials(v101, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v101, v111, Prefix, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16_t>(v3dPosition.X * 256.0f), static_cast<uint16_t>(v3dPosition.Y * 256.0f), static_cast<uint16_t>(v3dPosition.Z * 256.0f));
 						surfaceVertex.Position = v3dScaledPosition;
 						//surfaceVertex.encodedNormal = encodeNormal(v3dNormal);
-						surfaceVertex.Data = uMaterial;
+						surfaceVertex.Data = uMaterial.VoxelType;
 
 						result = AddVertex(result, surfaceVertex);
 						const uint32 uLastVertexIndex = result.Vertices.Num() - 1;
@@ -342,7 +355,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 					{
 						sampler.MoveNegativeZ();
 						FVoxel v110 = sampler.GetVoxel();
-						auto v110Density = controller->ConvertToDensity(v110);
+						auto v110Density = controller->ConvertToDensity(v110, Prefix);
 						const float fInterp = static_cast<float>(Threshold - v110Density) / static_cast<float>(v111Density - v110Density);
 
 						// Compute the position
@@ -360,13 +373,13 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetEncodedMesh(UPagedVolumeComponent* 
 						//}
 
 						// Allow the controller to decide how the material should be derived from the voxels.
-						FVoxel uMaterial = controller->BlendMaterials(v110, v111, fInterp);
+						FVoxel uMaterial = controller->BlendMaterials(v110, v111, Prefix, fInterp);
 
 						FVoxelVertex surfaceVertex;
 						const FVector v3dScaledPosition(static_cast<uint16_t>(v3dPosition.X * 256.0f), static_cast<uint16_t>(v3dPosition.Y * 256.0f), static_cast<uint16_t>(v3dPosition.Z * 256.0f));
 						surfaceVertex.Position = v3dScaledPosition;
 						//surfaceVertex.encodedNormal = encodeNormal(v3dNormal);
-						surfaceVertex.Data = uMaterial;
+						surfaceVertex.Data = uMaterial.VoxelType;
 
 						result = AddVertex(result, surfaceVertex);
 						const uint32 uLastVertexIndex = result.Vertices.Num() - 1;
@@ -490,7 +503,7 @@ FVoxelMesh UVoxelProceduralMeshComponent::GetDecodedMesh(FVoxelMesh EncodedMesh)
 	return decodedMesh;
 }
 
-TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const FVoxelMesh& ExtractedMesh)
+TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const FVoxelMesh& ExtractedMesh, const TMap<FGameplayTag, uint8>& MaterialMap)
 {
 	TArray<FVoxelMeshSection> meshSections;
 	auto decodedMesh = GetDecodedMesh(ExtractedMesh);
@@ -525,10 +538,16 @@ TArray<FVoxelMeshSection> UVoxelProceduralMeshComponent::GenerateTriangles(const
 		triangle.Vertex2.Position += decodedMesh.Offset;
 
 		// Get Material ID
-		uint8 materialID = triangle.Vertex0.Data.Material;
-		if (triangle.Vertex1.Data.Material == triangle.Vertex2.Data.Material)
+		uint8 materialID;
+		if (triangle.Vertex1.Data.MatchesTagExact(triangle.Vertex2.Data))
 		{
-			materialID = triangle.Vertex1.Data.Material;
+			// If vertex 1 and 2 share the same material, use that one
+			materialID = MaterialMap[triangle.Vertex1.Data];
+		}
+		else
+		{
+			// Vertex 0 has the material for the majority of this triangle
+			materialID = MaterialMap[triangle.Vertex0.Data];
 		}
 		triangle.MaterialID = materialID;
 		if (materialID >= meshSections.Num())

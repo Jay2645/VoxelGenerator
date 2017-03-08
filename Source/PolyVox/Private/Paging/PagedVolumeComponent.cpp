@@ -92,7 +92,7 @@ void UPagedVolumeComponent::TickComponent( float DeltaTime, ELevelTick TickType,
 		ChunksToCreateMesh.Dequeue(ChunkCurrentlyMakingMeshFor);
 		if (ChunkCurrentlyMakingMeshFor != NULL)
 		{
-			ChunkCurrentlyMakingMeshFor->CreateMarchingCubesMesh(this, ChunkMaterials);
+			ChunkCurrentlyMakingMeshFor->CreateMarchingCubesMesh(this, VoxelPrefix, ChunkMaterials);
 		}
 	}
 }
@@ -440,11 +440,11 @@ void UPagedVolumeComponent::FlattenRegionToHeight(const FRegion& Region, const i
 			for (int z = Region.LowerZ; z < Region.UpperZ; z++)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (z <= Height && !voxel.bIsSolid)
+				if (z <= Height && !voxel.VoxelType.IsValid())
 				{
 					SetVoxelByCoordinates(x, y, z, Filler);
 				}
-				else if (z > Height && voxel.bIsSolid)
+				else if (z > Height && voxel.VoxelType.IsValid())
 				{
 					SetVoxelByCoordinates(x, y, z, FVoxel::GetEmptyVoxel());
 				}
@@ -484,7 +484,7 @@ void UPagedVolumeComponent::SetRegionHeightmap(const FRegion& Region, const TArr
 	}
 }
 
-void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<uint8>& Materials)
+void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<FGameplayTag>& Materials)
 {
 	if (Heights.Num() != Materials.Num())
 	{
@@ -498,7 +498,7 @@ void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<
 	{
 		for (int y = Region.LowerY; y < Region.UpperY; y++)
 		{
-			uint8 targetMaterial = UArrayHelper::Get2DUint8(Materials, x, y, regionWidth);
+			FGameplayTag targetMaterial = UArrayHelper::Get2DGameplayTag(Materials, x, y, regionWidth);
 			
 			float targetHeightPercent = UArrayHelper::Get2DFloat(Heights, x, y, regionWidth);
 			int32 targetHeight = Region.LowerZ + FMath::RoundToInt(regionDepth * targetHeightPercent);
@@ -506,7 +506,7 @@ void UPagedVolumeComponent::SetRegionVoxels(const FRegion& Region, const TArray<
 			{
 				if (z <= targetHeight)
 				{
-					SetVoxelByCoordinates(y, x, z, FVoxel::MakeVoxel(targetMaterial, true));
+					SetVoxelByCoordinates(y, x, z, FVoxel::MakeVoxel(targetMaterial));
 				}
 				else
 				{
@@ -572,7 +572,7 @@ void UPagedVolumeComponent::SetHeightmapFromImage(UTexture2D* Texture, FIntVecto
 	SetRegionHeightmap(region, floatArray, Filler);
 }
 
-void UPagedVolumeComponent::SetRegionMaterials(const FRegion& Region, const TArray<uint8>& Materials, int32 BeginAtDepth, int32 PenetrateDistance)
+void UPagedVolumeComponent::SetRegionMaterials(const FRegion& Region, const TArray<FGameplayTag>& Materials, int32 BeginAtDepth, int32 PenetrateDistance)
 {
 	for (int x = Region.LowerX; x < Region.UpperX; x++)
 	{
@@ -583,12 +583,12 @@ void UPagedVolumeComponent::SetRegionMaterials(const FRegion& Region, const TArr
 			for (int z = Region.UpperZ - 1; z >= Region.LowerZ; z--)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (voxel.bIsSolid)
+				if (voxel.VoxelType.IsValid())
 				{
 					currentVoxelDepth++;
 					if (currentVoxelDepth >= BeginAtDepth && currentVoxelDepth < PenetrateDistance)
 					{
-						voxel.Material = UArrayHelper::Get2DUint8(Materials, x, y, URegionHelper::GetWidthInVoxels(Region));
+						voxel.VoxelType = UArrayHelper::Get2DGameplayTag(Materials, x, y, URegionHelper::GetWidthInVoxels(Region));
 						SetVoxelByCoordinates(x, y, z, voxel);
 					}
 					else if (currentVoxelDepth + BeginAtDepth >= PenetrateDistance)
@@ -611,14 +611,14 @@ void UPagedVolumeComponent::DrawVolumeAsDebug(const FRegion& DebugRegion)
 			for (int z = DebugRegion.LowerZ; z < DebugRegion.UpperZ; z++)
 			{
 				FVoxel voxel = GetVoxelByCoordinates(x, y, z);
-				if (!voxel.bIsSolid)
+				if (!voxel.VoxelType.IsValid())
 				{
 					continue;
 				}
 				else
 				{
 					FVoxel neighbor = GetVoxelByCoordinates(x, y, z + 1);
-					if (neighbor.bIsSolid)
+					if (neighbor.VoxelType.IsValid())
 					{
 						continue;
 					}

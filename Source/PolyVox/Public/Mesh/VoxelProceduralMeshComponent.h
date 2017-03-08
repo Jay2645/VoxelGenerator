@@ -28,6 +28,7 @@ SOFTWARE.
 #include "ProceduralMeshComponent.h"
 #include "RegionHelper.h"
 #include "PagedVolumeComponent.h"
+#include "GameplayTagContainer.h"
 #include "MarchingCubesDefaultController.h"
 #include "VolumeSampler.h"
 #include "VoxelProceduralMeshComponent.generated.h"
@@ -40,7 +41,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	FVector Position;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
-	FVoxel Data;
+	FGameplayTag Data;
 };
 
 USTRUCT(BlueprintType)
@@ -92,7 +93,7 @@ public:
 	float VoxelSize = 100.0f;
 
 	UFUNCTION(BlueprintCallable, Category = "Voxels|Mesh")
-	void CreateMarchingCubesMesh(UPagedVolumeComponent* VolumeData, FRegion Region, const TArray<FVoxelMaterial>& VoxelMaterials);
+	void CreateMarchingCubesMesh(UPagedVolumeComponent* VolumeData, FRegion Region, const FGameplayTag& Prefix, const TArray<FVoxelMaterial>& VoxelMaterials);
 
 private:
 	const uint16 EdgeTable[256] =
@@ -394,10 +395,10 @@ private:
 	static FVoxelMesh AddVertex(FVoxelMesh& VoxelMesh, const FVoxelVertex& Vertex);
 	static FVoxelMesh AddTriangle(FVoxelMesh& VoxelMesh, const int32& Index0, const int32& Index1, const int32& Index2);
 	static FProcMeshSection CreateMeshSectionData(TArray<FVoxelTriangle> Triangles, bool bShouldEnableCollision, float VoxelSize);
-	FVoxelMesh GetEncodedMesh(UPagedVolumeComponent* Volume, FRegion Region, TSubclassOf<UMarchingCubesDefaultController> Controller);
+	FVoxelMesh GetEncodedMesh(UPagedVolumeComponent* Volume, FRegion Region, const FGameplayTag& Prefix, TSubclassOf<UMarchingCubesDefaultController> Controller);
 	static FVoxelMesh GetDecodedMesh(FVoxelMesh EncodedMesh);
 
-	static TArray<FVoxelMeshSection> GenerateTriangles(const FVoxelMesh& ExtractedMesh);
+	static TArray<FVoxelMeshSection> GenerateTriangles(const FVoxelMesh& ExtractedMesh, const TMap<FGameplayTag, uint8>& MaterialMap);
 
 	//TArray<FVoxelMeshSection> GenerateTriangles(ABaseVolume* VolumeData, UMarchingCubesDefaultController* Controller, FRegion region);
 	//FProcMeshSection CreateMeshSectionData(TArray<FVoxelTriangle> Triangles, bool bShouldEnableCollision);

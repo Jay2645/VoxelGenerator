@@ -171,12 +171,12 @@ void APagedChunk::SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 
 	bNeedsNewMarchingCubesMesh = true;
 }
 
-void APagedChunk::CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, TArray<FVoxelMaterial> VoxelMaterials)
+void APagedChunk::CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, const FGameplayTag& Prefix, TArray<FVoxelMaterial> VoxelMaterials)
 {
 	if(bNeedsNewMarchingCubesMesh)
 	{
 		UE_LOG(LogPolyVox, Log, TEXT("Creating PolyVox mesh for %s, region (%d, %d, %d) to (%d, %d, %d)"), *GetName(), ChunkRegion.LowerX, ChunkRegion.LowerY, ChunkRegion.LowerZ, ChunkRegion.UpperX, ChunkRegion.UpperY, ChunkRegion.UpperZ);
-		VoxelMesh->CreateMarchingCubesMesh(Volume, ChunkRegion, VoxelMaterials);
+		VoxelMesh->CreateMarchingCubesMesh(Volume, ChunkRegion, Prefix, VoxelMaterials);
 	}
 	bNeedsNewMarchingCubesMesh = false;
 }

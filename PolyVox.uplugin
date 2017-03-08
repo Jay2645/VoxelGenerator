@@ -10,7 +10,7 @@
 	"DocsURL": "https://github.com/Jay2645/VoxelGenerator",
 	"MarketplaceURL": "https://github.com/Jay2645/VoxelGenerator",
 	"SupportURL": "https://github.com/Jay2645/VoxelGenerator",
-	"CanContainContent": false,
+	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"Installed": false,
 	"Modules": [

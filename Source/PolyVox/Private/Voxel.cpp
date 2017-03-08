@@ -27,13 +27,21 @@ SOFTWARE.
 
 FVoxel FVoxel::GetEmptyVoxel()
 {
-	return MakeVoxel(0, false);
+	return MakeVoxel(FGameplayTag::EmptyTag);
+	//return MakeVoxel(0, false);
 }
 
-FVoxel FVoxel::MakeVoxel(uint8 MaterialID, bool bShouldBeSolid)
+/*FVoxel FVoxel::MakeVoxel(uint8 MaterialID, bool bShouldBeSolid)
 {
 	FVoxel voxel;
 	voxel.Material = MaterialID;
 	voxel.bIsSolid = bShouldBeSolid;
+	return voxel;
+}*/
+
+FVoxel FVoxel::MakeVoxel(FGameplayTag VoxelType)
+{
+	FVoxel voxel;
+	voxel.VoxelType = VoxelType;
 	return voxel;
 }

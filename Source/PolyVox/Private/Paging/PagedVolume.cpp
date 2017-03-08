@@ -29,6 +29,7 @@ SOFTWARE.
 APagedVolume::APagedVolume()
 {
 	PagedVolumeComponent = CreateDefaultSubobject<UPagedVolumeComponent>(TEXT("Paged Volume"));
+	PagedVolumeComponent->VoxelPrefix = FGameplayTag::RequestGameplayTag(TEXT("Voxels.Static"));
 	/**
 	* Total list of biomes:
 	*		0 - OCEAN

@@ -63,6 +63,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Noise")
 	int32 RandomSeed = 123;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
+	FGameplayTag VoxelPrefix;
 
 	UFUNCTION(BlueprintPure, Category = "Volume|Voxels")
 		virtual FVoxel GetVoxelByCoordinates(int32 XPos, int32 YPos, int32 ZPos);
@@ -115,7 +118,7 @@ public:
 	// This heightmap should be a 2D array, with dimensions the same as the width (x) and height (y) of the region being passed into it.
 	// The Voxel passed into this function is used for any solid voxels in the heightmap.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-		void SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<uint8>& Materials);
+		void SetRegionVoxels(const FRegion& Region, const TArray<float>& Heights, const TArray<FGameplayTag>& Materials);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
 		void SetHeightmapFromImage(UTexture2D* Texture, FIntVector StartingPoint, int32 RegionHeight, FVoxel Filler);
@@ -125,7 +128,7 @@ public:
 	// Begin at Depth specifies how far beneath the surface the painting will start.
 	// Penetrate Distance is how many voxels deep the material will extend below the surface.
 	UFUNCTION(BlueprintCallable, Category = "Volume|Voxels")
-		void SetRegionMaterials(const FRegion& Region, const TArray<uint8>& Materials, int32 BeginAtDepth = 0, int32 PenetrateDistance = 256);
+		void SetRegionMaterials(const FRegion& Region, const TArray<FGameplayTag>& Materials, int32 BeginAtDepth = 0, int32 PenetrateDistance = 256);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Debug")
 		void DrawVolumeAsDebug(const FRegion& DebugRegion);

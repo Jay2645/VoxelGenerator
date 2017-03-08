@@ -24,7 +24,7 @@ SOFTWARE.
 
 #pragma once
 
-#include "Engine/DataAsset.h"
+#include "GameplayTagContainer.h"
 #include "Voxel.generated.h"
 
 /**
@@ -35,7 +35,7 @@ struct POLYVOX_API FVoxel
 {
 	GENERATED_BODY()
 public:	
-	// An index referring to this voxel's "Material."
+	/*// An index referring to this voxel's "Material."
 	// This can be either a UENUM or a hardcoded uint8 value.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
 	uint8 Material;
@@ -47,9 +47,18 @@ public:
 	{
 		Material = 0;
 		bIsSolid = false;
+	}*/
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Voxel")
+	FGameplayTag VoxelType;
+	
+	FVoxel()
+	{
+		VoxelType = FGameplayTag::EmptyTag;
 	}
 
 	static FVoxel GetEmptyVoxel();
 
-	static FVoxel MakeVoxel(uint8 MaterialID, bool bShouldBeSolid);
+	//static FVoxel MakeVoxel(uint8 MaterialID, bool bShouldBeSolid);
+	static FVoxel MakeVoxel(FGameplayTag VoxelType);
 };

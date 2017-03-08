@@ -39,7 +39,7 @@ public:
 	*		17 - SUBTROPICAL DESERT
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Biomes")
-	TMap<uint8, FVoxelNoiseSettings> BiomeNoiseSettings;
+	TMap<FGameplayTag, FVoxelNoiseSettings> BiomeNoiseSettings;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Biomes")
 	bool bGenerateNewBiomes;

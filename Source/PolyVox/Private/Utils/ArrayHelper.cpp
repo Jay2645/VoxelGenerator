@@ -13,6 +13,17 @@ uint8 UArrayHelper::Get2DUint8(const TArray<uint8>& IntArray, const int32 XPos, 
 	return IntArray[index];
 }
 
+FGameplayTag UArrayHelper::Get2DGameplayTag(const TArray<FGameplayTag>& TagArray, const int32 XPos, const int32 YPos, const int32 RowLength)
+{
+	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);
+	if (index >= TagArray.Num())
+	{
+		UE_LOG(LogPolyVox, Error, TEXT("Returned an index (%d) which was outside the bounds of our array (%d)!"), index, TagArray.Num());
+		return FGameplayTag::EmptyTag;
+	}
+	return TagArray[index];
+}
+
 int32 UArrayHelper::Get2Dint32(const TArray<int32>& IntArray, const int32 XPos, const int32 YPos, const int32 RowLength)
 {
 	int32 index = Get1DIndexFrom2DIndicies(XPos, YPos, RowLength);

@@ -29,6 +29,7 @@ SOFTWARE.
 ALandWaterVolume::ALandWaterVolume()
 {
 	WaterPagedVolumeComponent = CreateDefaultSubobject<UPagedVolumeComponent>(TEXT("Water Paged Volume"));
+	WaterPagedVolumeComponent->VoxelPrefix = FGameplayTag::RequestGameplayTag(TEXT("Voxels.Dynamic"));
 }
 
 UPagedVolumeComponent* ALandWaterVolume::GetWaterPagedVolume() const

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "GameplayTagContainer.h"
 #include "ArrayHelper.generated.h"
 
 /**
@@ -13,6 +14,9 @@ class POLYVOX_API UArrayHelper : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintPure, Category = "Arrays")
 	static uint8 Get2DUint8(const TArray<uint8>& IntArray, const int32 XPos, const int32 YPos, const int32 RowLength);
+
+	UFUNCTION(BlueprintPure, Category = "Arrays")
+	static FGameplayTag Get2DGameplayTag(const TArray<FGameplayTag>& IntArray, const int32 XPos, const int32 YPos, const int32 RowLength);
 
 	UFUNCTION(BlueprintPure, Category = "Arrays")
 	static int32 Get2Dint32(const TArray<int32>& IntArray, const int32 XPos, const int32 YPos, const int32 RowLength);

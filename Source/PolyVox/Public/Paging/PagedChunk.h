@@ -73,7 +73,7 @@ public:
 	void SetVoxelByCoordinatesChunkSpace(int32 XPos, int32 YPos, int32 ZPos, FVoxel Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Volume|Mesh")
-	void CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, TArray<FVoxelMaterial> VoxelMaterials);
+	void CreateMarchingCubesMesh(UPagedVolumeComponent* Volume, const FGameplayTag& Prefix, TArray<FVoxelMaterial> VoxelMaterials);
 	
 	FVoxel GetDataAtIndex(const int32 CurrentVoxelIndex) const;
 
