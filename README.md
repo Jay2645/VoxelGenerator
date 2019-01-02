@@ -1,6 +1,8 @@
 # Voxel Generator
 A system for generating 3D voxel terrain in Unreal Engine 4, based on the PolyVox library (used under the MIT license).
 
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 # How to Use
 The "default" Actor you want to place is the `APagedVolume` actor. This actor has a `PagedVolumeComponent`, which is an area full of "chunks" (`APagedChunk`), which contain voxels in a 3-dimensional array. When the game needs to access a certain voxel in a chunk, it has to "page" in that chunk, spawning a `APagedChunk` actor in the world. From here, it can access any voxel stored in that chunk. This means you can store large worlds in the PagedVolume and only access the parts of the world that you need, on a chunk-by-chunk basis.
 
